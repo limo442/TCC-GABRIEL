@@ -62,7 +62,7 @@ docker-compose --version
 ### 1. Clonando o Repositório
 
 ```bash
-git clone https://github.com/gabrielpaulosi/tcc-gabriel.git
+git clone https://github.com/limo442/TCC-GABRIEL.git
 cd tcc-gabriel
 ```
 
