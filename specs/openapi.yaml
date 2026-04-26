@@ -1,0 +1,893 @@
+openapi: 3.0.0
+info:
+  title: API de Aluguel de Carros
+  description: API para gerenciamento de veículos, clientes, usuários e aluguéis de carros.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8002/api
+    description: Servidor de Desenvolvimento Local
+tags:
+  - name: Veiculos
+    description: Operações relacionadas a veículos
+  - name: Usuarios
+    description: Operações relacionadas a usuários do sistema
+  - name: Clientes
+    description: Operações relacionadas a clientes
+  - name: Alugueis
+    description: Operações relacionadas a aluguéis de veículos
+
+paths:
+   /veiculos:
+    get:
+      tags:
+        - Veiculos
+      summary: Lista todos os veículos
+      description: Retorna uma lista paginada de veículos com indicador de próxima página.
+      parameters:
+        - in: query
+          name: disponivel
+          schema:
+            type: boolean
+          description: Filtra veículos por disponibilidade.
+        - in: query
+          name: categoria
+          schema:
+            type: string
+          description: Filtra veículos por categoria.
+        - in: query
+          name: marca
+          schema:
+            type: string
+          description: Filtra veículos por marca.
+        - in: query
+          name: modelo
+          schema:
+            type: string
+          description: Filtra veículos por modelo.
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Número da página (começando em 0).
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+          description: Número de itens por página.
+      responses:
+        '200':
+          description: Lista paginada de veículos retornada com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginaVeiculos'
+        '500':
+          description: Erro interno do servidor.
+    post:
+      tags:
+        - Veiculos
+      summary: Cadastra um novo veículo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VeiculoInput'
+      responses:
+        '201':
+          description: Veículo cadastrado com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Veiculo'
+        '400':
+          description: Dados inválidos.
+        '500':
+          description: Erro interno do servidor.
+
+  /veiculos/{id}:
+    get:
+      tags:
+        - Veiculos
+      summary: Obtém um veículo por ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID do veículo.
+      responses:
+        '200':
+          description: Veículo encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Veiculo'
+        '404':
+          description: Veículo não encontrado.
+        '500':
+          description: Erro interno do servidor.
+    put:
+      tags:
+        - Veiculos
+      summary: Atualiza um veículo existente
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID do veículo a ser atualizado.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VeiculoInput'
+      responses:
+        '200':
+          description: Veículo atualizado com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Veiculo'
+        '400':
+          description: Dados inválidos.
+        '404':
+          description: Veículo não encontrado.
+        '500':
+          description: Erro interno do servidor.
+    delete:
+      tags:
+        - Veiculos
+      summary: Exclui um veículo
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID do veículo a ser excluído.
+      responses:
+        '204':
+          description: Veículo excluído com sucesso.
+        '404':
+          description: Veículo não encontrado.
+        '500':
+          description: Erro interno do servidor.
+
+  /usuarios:
+    post:
+      tags:
+        - Usuarios
+      summary: Cadastra um novo usuário
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UsuarioInput'
+      responses:
+        '201':
+          description: Usuário cadastrado com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Usuario'
+        '400':
+          description: Dados inválidos.
+        '500':
+          description: Erro interno do servidor.
+     get:
+       tags:
+         - Usuarios
+       summary: Lista todos os usuários
+       parameters:
+         - in: query
+           name: page
+           schema:
+             type: integer
+             minimum: 0
+             default: 0
+           description: Número da página (começando em 0).
+         - in: query
+           name: pageSize
+           schema:
+             type: integer
+             minimum: 1
+             maximum: 100
+             default: 10
+           description: Número de itens por página.
+       responses:
+         '200':
+           description: Lista paginada de usuários retornada com sucesso.
+           content:
+             application/json:
+               schema:
+                 type: object
+                 properties:
+                   hasNext:
+                     type: boolean
+                   items:
+                     type: array
+                     items:
+                       $ref: '#/components/schemas/Usuario'
+         '500':
+           description: Erro interno do servidor.
+
+   /clientes:
+    get:
+      tags:
+        - Clientes
+      summary: Lista todos os clientes
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Número da página (começando em 0).
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+          description: Número de itens por página.
+      responses:
+        '200':
+          description: Lista paginada de clientes retornada com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginaClientes'
+        '500':
+          description: Erro interno do servidor.
+    post:
+      tags:
+        - Clientes
+      summary: Cadastra um novo cliente
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClienteInput'
+      responses:
+        '201':
+          description: Cliente cadastrado com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cliente'
+        '400':
+          description: Dados inválidos.
+        '500':
+          description: Erro interno do servidor.
+
+  /clientes/{id}:
+    get:
+      tags:
+        - Clientes
+      summary: Obtém um cliente por ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID do cliente.
+      responses:
+        '200':
+          description: Cliente encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cliente'
+        '404':
+          description: Cliente não encontrado.
+        '500':
+          description: Erro interno do servidor.
+    put:
+      tags:
+        - Clientes
+      summary: Atualiza um cliente existente
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID do cliente a ser atualizado.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClienteInput'
+      responses:
+        '200':
+          description: Cliente atualizado com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cliente'
+        '400':
+          description: Dados inválidos.
+        '404':
+          description: Cliente não encontrado.
+        '500':
+          description: Erro interno do servidor.
+    delete:
+      tags:
+        - Clientes
+      summary: Exclui um cliente
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID do cliente a ser excluído.
+      responses:
+        '204':
+          description: Cliente excluído com sucesso.
+        '404':
+          description: Cliente não encontrado.
+        '500':
+          description: Erro interno do servidor.
+
+   /alugueis:
+    get:
+      tags:
+        - Alugueis
+      summary: Lista todos os aluguéis
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [reservado, ativo, cancelado, concluido]
+          description: Filtra aluguéis por status.
+        - in: query
+          name: cliente_id
+          schema:
+            type: integer
+          description: Filtra aluguéis por ID do cliente.
+        - in: query
+          name: veiculo_id
+          schema:
+            type: integer
+          description: Filtra aluguéis por ID do veículo.
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Número da página (começando em 0).
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+          description: Número de itens por página.
+      responses:
+        '200':
+          description: Lista paginada de aluguéis retornada com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginaAlugueis'
+        '500':
+          description: Erro interno do servidor.
+    post:
+      tags:
+        - Alugueis
+      summary: Cria um novo aluguel (reserva)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AluguelInput'
+      responses:
+        '201':
+          description: Aluguel (reserva) criado com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Aluguel'
+        '400':
+          description: Dados inválidos.
+        '500':
+          description: Erro interno do servidor.
+
+  /alugueis/{id}:
+    get:
+      tags:
+        - Alugueis
+      summary: Obtém um aluguel por ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID do aluguel.
+      responses:
+        '200':
+          description: Aluguel encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Aluguel'
+        '404':
+          description: Aluguel não encontrado.
+        '500':
+          description: Erro interno do servidor.
+    put:
+      tags:
+        - Alugueis
+      summary: Atualiza um aluguel existente
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID do aluguel a ser atualizado.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AluguelUpdateInput'
+      responses:
+        '200':
+          description: Aluguel atualizado com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Aluguel'
+        '400':
+          description: Dados inválidos.
+        '404':
+          description: Aluguel não encontrado.
+        '500':
+          description: Erro interno do servidor.
+    delete:
+      tags:
+        - Alugueis
+      summary: Exclui um aluguel
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID do aluguel a ser excluído.
+      responses:
+        '204':
+          description: Aluguel excluído com sucesso.
+        '404':
+          description: Aluguel não encontrado.
+        '500':
+          description: Erro interno do servidor.
+
+  /alugueis/{id}/status:
+    put:
+      tags:
+        - Alugueis
+      summary: Atualiza o status de um aluguel
+      description: Usado para mudar o status do aluguel (ex: de 'reservado' para 'ativo' ou 'cancelado').
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID do aluguel.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+                - usuario_id
+              properties:
+                status:
+                  type: string
+                  enum: [ativo, cancelado]
+                  description: Novo status do aluguel.
+                usuario_id:
+                  type: integer
+                  description: ID do usuário que está atualizando o status.
+      responses:
+        '200':
+          description: Status do aluguel atualizado com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Aluguel'
+        '400':
+          description: Dados inválidos ou transição de status não permitida.
+        '404':
+          description: Aluguel não encontrado.
+        '500':
+          description: Erro interno do servidor.
+
+  /alugueis/{id}/finalizar:
+    put:
+      tags:
+        - Alugueis
+      summary: Finaliza um aluguel
+      description: Usado para concluir um aluguel, registrando a data de entrega, valor realizado e forma de pagamento.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID do aluguel.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - data_entrega
+                - valor_realizado
+                - forma_pagamento
+                - usuario_id
+              properties:
+                data_entrega:
+                  type: string
+                  format: date
+                  description: Data real de entrega do veículo.
+                valor_realizado:
+                  type: number
+                  format: float
+                  description: Valor final cobrado pelo aluguel.
+                forma_pagamento:
+                  type: string
+                  enum: [dinheiro, pix, cartao]
+                  description: Forma de pagamento utilizada.
+                usuario_id:
+                  type: integer
+                  description: ID do usuário que está finalizando o aluguel.
+      responses:
+        '200':
+          description: Aluguel finalizado com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Aluguel'
+        '400':
+          description: Dados inválidos ou aluguel já finalizado/cancelado.
+        '404':
+          description: Aluguel não encontrado.
+        '500':
+          description: Erro interno do servidor.
+
+components:
+  schemas:
+    PaginaVeiculos:
+      type: object
+      properties:
+        hasNext:
+          type: boolean
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Veiculo'
+    
+    PaginaUsuarios:
+      type: object
+      properties:
+        hasNext:
+          type: boolean
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Usuario'
+    
+    PaginaClientes:
+      type: object
+      properties:
+        hasNext:
+          type: boolean
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Cliente'
+    
+    PaginaAlugueis:
+      type: object
+      properties:
+        hasNext:
+          type: boolean
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Aluguel'
+    Veiculo:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        marca:
+          type: string
+        modelo:
+          type: string
+        categoria:
+          type: string
+        ano_fabricacao:
+          type: integer
+        placa:
+          type: string
+        valor_diaria:
+          type: number
+          format: float
+        disponivel:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+    
+    PaginaVeiculos:
+      type: object
+      properties:
+        hasNext:
+          type: boolean
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Veiculo'
+    VeiculoInput:
+      type: object
+      required:
+        - marca
+        - modelo
+        - categoria
+        - ano_fabricacao
+        - placa
+        - valor_diaria
+      properties:
+        marca:
+          type: string
+          minLength: 2
+          maxLength: 255
+        modelo:
+          type: string
+          minLength: 2
+          maxLength: 255
+        categoria:
+          type: string
+          minLength: 2
+          maxLength: 255
+        ano_fabricacao:
+          type: integer
+          minimum: 1900
+          maximum: 2100
+        placa:
+          type: string
+          pattern: '^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$' # Padrão Mercosul ou similar
+          maxLength: 10
+        valor_diaria:
+          type: number
+          format: float
+          minimum: 0.01
+        disponivel:
+          type: boolean
+          default: true
+
+    Usuario:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+    UsuarioInput:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 255
+        password:
+          type: string
+          minLength: 6 # Exemplo de validação de senha
+          maxLength: 255
+
+    Cliente:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        cod:
+          type: string
+        nome:
+          type: string
+        endereco:
+          type: string
+        telefone:
+          type: string
+        data_nascimento:
+          type: string
+          format: date
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+    ClienteInput:
+      type: object
+      required:
+        - cod
+        - nome
+      properties:
+        cod:
+          type: string
+          minLength: 1
+          maxLength: 50
+        nome:
+          type: string
+          minLength: 3
+          maxLength: 255
+        endereco:
+          type: string
+          maxLength: 255
+        telefone:
+          type: string
+          pattern: '^|$?\d{2}$|?[\s-]?\d{4,5}-?\d{4}$' # Exemplo de validação de telefone
+        data_nascimento:
+          type: string
+          format: date
+
+    Aluguel:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        veiculo_id:
+          type: integer
+        cliente_id:
+          type: integer
+        usuario_id:
+          type: integer
+        data_saida:
+          type: string
+          format: date
+        data_entrega:
+          type: string
+          format: date
+        data_reserva:
+          type: string
+          format: date-time
+          readOnly: true
+        dias_previsto:
+          type: integer
+        valor_previsto:
+          type: number
+          format: float
+        valor_realizado:
+          type: number
+          format: float
+        forma_pagamento:
+          type: string
+          enum: [dinheiro, pix, cartao]
+        status:
+          type: string
+          enum: [reservado, ativo, cancelado, concluido]
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+    AluguelInput:
+      type: object
+      required:
+        - veiculo_id
+        - cliente_id
+        - usuario_id
+        - data_saida
+        - dias_previsto
+        - valor_previsto
+      properties:
+        veiculo_id:
+          type: integer
+        cliente_id:
+          type: integer
+        usuario_id:
+          type: integer
+        data_saida:
+          type: string
+          format: date
+        dias_previsto:
+          type: integer
+          minimum: 1
+        valor_previsto:
+          type: number
+          format: float
+          minimum: 0.01
+        forma_pagamento:
+          type: string
+          enum: [dinheiro, pix, cartao]
+          default: dinheiro
+        status:
+          type: string
+          enum: [reservado] # Ao criar, o status inicial é sempre reservado
+          default: reservado
+    AluguelUpdateInput:
+      type: object
+      properties:
+        veiculo_id:
+          type: integer
+        cliente_id:
+          type: integer
+        usuario_id:
+          type: integer
+        data_saida:
+          type: string
+          format: date
+        data_entrega:
+          type: string
+          format: date
+        dias_previsto:
+          type: integer
+          minimum: 1
+        valor_previsto:
+          type: number
+          format: float
+          minimum: 0.01
+        valor_realizado:
+          type: number
+          format: float
+          minimum: 0
+        forma_pagamento:
+          type: string
+          enum: [dinheiro, pix, cartao]
+        status:
+          type: string
+          enum: [reservado, ativo, cancelado, concluido]

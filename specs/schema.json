@@ -1,0 +1,65 @@
+Project "Sistema de Aluguel de Carros" {
+  database_type: 'PostgreSQL'
+  Note: 'Modelagem de dados para o sistema de aluguel de carros.'
+}
+
+Table Veiculos {
+  id int [pk, increment]
+  marca varchar(255) [not null]
+  modelo varchar(255) [not null]
+  categoria varchar(255) [not null]
+  ano_fabricacao int [not null]
+  placa varchar(10) [unique, not null]
+  valor_diaria decimal(10, 2) [not null]
+  disponivel boolean [default: true]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+
+  Note: 'Armazena informações sobre os veículos disponíveis para aluguel.'
+}
+
+Table Usuarios {
+  id int [pk, increment]
+  username varchar(255) [unique, not null]
+  password varchar(255) [not null]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+
+  Note: 'Armazena informações dos usuários do sistema (funcionários).'
+}
+
+Table Clientes {
+  id int [pk, increment]
+  cod varchar(50) [unique, not null]
+  nome varchar(255) [not null]
+  endereco varchar(255)
+  telefone varchar(20)
+  data_nascimento date
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+
+  Note: 'Armazena informações dos clientes que alugam os veículos.'
+}
+
+Table Alugueis {
+  id int [pk, increment]
+  veiculo_id int [not null]
+  cliente_id int [not null]
+  usuario_id int [not null] // Usuário que registrou/atualizou o aluguel
+  data_saida date [not null]
+  data_entrega date
+  data_reserva date [not null, default: `now()`]
+  dias_previsto int [not null]
+  valor_previsto decimal(10, 2) [not null]
+  valor_realizado decimal(10, 2)
+  forma_pagamento varchar(50) [not null, default: 'dinheiro'] // dinheiro, pix, cartao
+  status varchar(50) [not null, default: 'reservado'] // reservado, ativo, cancelado, concluido
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+
+  Note: 'Registra os aluguéis de veículos.'
+}
+
+Ref: Alugueis.veiculo_id > Veiculos.id
+Ref: Alugueis.cliente_id > Clientes.id
+Ref: Alugueis.usuario_id > Usuarios.id

@@ -1,0 +1,20 @@
+.ui-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+.ui-button-default { background: #3b82f6; color: white; border-color: #3b82f6; }
+.ui-button-default:hover { background: #2563eb; }
+.ui-button-secondary { background: #f3f4f6; color: #374151; border-color: #d1d5db; }
+.ui-button-secondary:hover { background: #e5e7eb; }
+.ui-button-destructive { background: #ef4444; color: white; border-color: #ef4444; }
+.ui-button-destructive:hover { background: #dc2626; }
+.ui-button-sm { padding: 0.5rem 1rem; font-size: 0.875rem; }
+.ui-button-default { padding: 0.75rem 1.5rem; font-size: 0.875rem; }
+.ui-button-lg { padding: 1rem 2rem; font-size: 1rem; }
+.ui-button:disabled { opacity: 0.5; cursor: not-allowed; }

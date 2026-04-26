@@ -1,0 +1,130 @@
+{
+  "theme_and_archetype": {
+    "theme": "light",
+    "archetype": "4 (Swiss & High-Contrast)",
+    "description": "A high-performance, authoritative operational dashboard. Clean, high-contrast, designed for rapid scanning and data clarity. Automotive undertones with sharp, technical accents.",
+    "emotional_tone": "Professional, Reliable, Efficient, Controlled"
+  },
+  "typography": {
+    "fonts": {
+      "headings": {
+        "family": "Outfit",
+        "weights": ["500", "600", "700"],
+        "purpose": "Used for page titles, major metrics, and section headers."
+      },
+      "body": {
+        "family": "IBM Plex Sans",
+        "weights": ["400", "500"],
+        "purpose": "Used for data tables, form inputs, labels, and secondary text."
+      }
+    },
+    "hierarchy": {
+      "h1": "text-3xl sm:text-4xl tracking-tight text-slate-900",
+      "h2": "text-2xl sm:text-3xl tracking-tight text-slate-900",
+      "h3": "text-xl sm:text-2xl font-semibold text-slate-800",
+      "h4": "text-lg sm:text-xl font-medium text-slate-800",
+      "body": "text-sm text-slate-600 leading-relaxed",
+      "label": "text-xs font-semibold uppercase tracking-[0.05em] text-slate-500",
+      "metric": "text-4xl sm:text-5xl font-bold tracking-tighter text-slate-900"
+    }
+  },
+  "color_palette": {
+    "backgrounds": {
+      "app": "#F8F9FA",
+      "surface": "#FFFFFF",
+      "surface_hover": "#F1F5F9",
+      "sidebar": "#FFFFFF",
+      "header": "#FFFFFF"
+    },
+    "text": {
+      "primary": "#0F172A",
+      "secondary": "#64748B",
+      "tertiary": "#94A3B8",
+      "on_primary": "#FFFFFF"
+    },
+    "borders": {
+      "default": "#E2E8F0",
+      "focus": "#0047FF",
+      "active": "#93C5FD"
+    },
+    "brand": {
+      "primary": "#0047FF",
+      "primary_hover": "#003BE0",
+      "primary_muted": "rgba(0, 71, 255, 0.1)"
+    },
+    "status": {
+      "available": "#10B981",
+      "available_bg": "#D1FAE5",
+      "rented": "#F59E0B",
+      "rented_bg": "#FEF3C7",
+      "maintenance": "#EF4444",
+      "maintenance_bg": "#FEE2E2",
+      "completed": "#3B82F6",
+      "completed_bg": "#DBEAFE"
+    }
+  },
+  "layout_and_spacing": {
+    "container_strategy": "Sidebar navigation (w-64) with a fixed top header (h-16) for breadcrumbs and user profile. Main content area fills the remaining viewport with overflow-y-auto.",
+    "grid_system": "Mode B: 'Control Room' Grid. Dense, data correlation. Base grid: grid-cols-1 md:grid-cols-2 xl:grid-cols-4. Gap: gap-4 or gap-6.",
+    "spacing_scale": {
+      "page_padding": "p-6 lg:p-8",
+      "widget_padding": "p-5",
+      "table_cell": "px-4 py-3",
+      "form_gap": "gap-4"
+    },
+    "surface_styles": {
+      "dashboard_cards": "bg-white border border-slate-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200",
+      "modals": "bg-white border border-slate-200 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)]"
+    }
+  },
+  "component_rules": {
+    "buttons": "Flat colors. Primary: bg-blue-600 hover:bg-blue-700 text-white. Secondary: bg-white border border-slate-200 text-slate-700 hover:bg-slate-50. Ghost: text-slate-600 hover:bg-slate-100.",
+    "tables": "Dense layout. Header rows use subtle background (bg-slate-50) and uppercase tiny text. Body rows have 1px bottom border. Hover state on rows (hover:bg-slate-50/50).",
+    "forms": "Inputs use rounded-md, border-slate-300, focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600. Labels must be bold and small.",
+    "status_badges": "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium. Use status background and text colors defined in color_palette.",
+    "tabs": "Shadcn tabs, overridden to be transparent background with an underline active state or segmented control style."
+  },
+  "motion_and_interactions": {
+    "hover_states": "All clickable rows and cards MUST slightly lift (-translate-y-[1px]) or change background color smoothly (duration-200 ease-out).",
+    "page_transitions": "Fade-in with a slight upward motion (translate-y-2 to 0, opacity 0 to 1) for main content area when switching sidebar routes.",
+    "loading": "Use skeleton loaders matching the exact dimensions of widgets/tables instead of spinners."
+  },
+  "icons": {
+    "library": "@phosphor-icons/react",
+    "style": "Regular or Duotone for sidebar, Fill for active states.",
+    "installation_command": "yarn add @phosphor-icons/react"
+  },
+  "media_urls": {
+    "login_background": {
+      "url": "https://static.prod-images.emergentagent.com/jobs/81e68779-d5f1-4a73-874c-9ae16d65f12a/images/8810e743854b0b333c93614545194e36cd6e0f185f490f4509c5406984e6b2f8.png",
+      "description": "Abstract minimalist background for professional car rental dashboard login page.",
+      "placement": "Used as the background image covering 50% of the screen on the login page (split layout) or as a full background with a glassmorphism card."
+    },
+    "dashboard_texture": {
+      "url": "https://static.prod-images.emergentagent.com/jobs/81e68779-d5f1-4a73-874c-9ae16d65f12a/images/a0e717d5b02c30cd8e9cdd11f5df13233e7272693fb7452192d4a5c7dd569bab.png",
+      "description": "Subtle, high-end geometric pattern background.",
+      "placement": "Can be used as a very low opacity (5%) fixed background texture for the entire app, or specifically inside the top header to give it depth."
+    },
+    "vehicle_placeholders": [
+      {
+        "url": "https://images.pexels.com/photos/19410430/pexels-photo-19410430.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "description": "Front view of a stylish white SUV",
+        "placement": "Used in the Vehicles list/grid as thumbnail placeholders for SUVs."
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1771210353591-20006eba7ad7?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1OTV8MHwxfHNlYXJjaHwzfHxibGFjayUyMHNlZGFuJTIwY2FyfGVufDB8fHx8MTc3NzA1MzYwM3ww&ixlib=rb-4.1.0&q=85",
+        "description": "A sleek black sedan parked against a white wall.",
+        "placement": "Used in the Vehicles list/grid as thumbnail placeholders for Sedans."
+      }
+    ]
+  },
+  "accessibility_and_testing": {
+    "contrast": "Ensure all text meets APCA/WCAG AA contrast. Especially white text on primary blue buttons.",
+    "testing_attributes": "All interactive elements, forms, links, buttons, table rows MUST have 'data-testid' attributes (e.g., 'data-testid=\"vehicle-row-1\"', 'data-testid=\"create-rental-button\"')."
+  },
+  "domain_specific_instructions": {
+    "language": "All UI text, placeholders, labels, and error messages MUST be in Portuguese (PT-BR).",
+    "dashboard_widgets": "Top metrics should include 'Total Veículos', 'Disponíveis', 'Aluguéis Ativos', 'Concluídos', and 'Receita'. Use a distinct visual weight for the 'North Star Metric' (e.g., Aluguéis Ativos).",
+    "rental_flow": "The rental details should function as a split-view or full-page form clearly outlining the stages: Reserva -> Retirada -> Devolução (with calculation of final price and payment method). Use visual timeline/stepper for status."
+  }
+}
