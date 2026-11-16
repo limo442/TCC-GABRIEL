@@ -261,3 +261,28 @@ test('auditoria exige perfil de administrador', async () => {
   assert.equal((await api('/auditoria', { token: login.data.token })).status, 403);
   assert.equal((await api('/auditoria', { token: adminToken })).status, 200);
 });
+
+
+test('integração externa IBGE converte dados de localidades em resposta limitada', async () => {
+  const http = require('node:http');
+  const upstream = http.createServer((req, res) => {
+    assert.equal(req.method, 'GET');
+    assert.equal(req.headers.accept, 'application/json');
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify([
+      { id: 35, sigla: 'SP', nome: 'São Paulo', campo_interno: 'não expor' }
+    ]));
+  });
+  upstream.listen(0, '127.0.0.1');
+  await new Promise(resolve => upstream.once('listening', resolve));
+  try {
+    process.env.IBGE_API_URL = `http://127.0.0.1:${upstream.address().port}/localidades/estados`;
+    const response = await api('/integracoes/ufs', { token: adminToken });
+    assert.equal(response.status, 200);
+    assert.deepEqual(response.data.items, [{ id: 35, sigla: 'SP', nome: 'São Paulo' }]);
+    assert.match(response.data.origem, /IBGE/);
+  } finally {
+    delete process.env.IBGE_API_URL;
+    await new Promise(resolve => upstream.close(resolve));
+  }
+});
