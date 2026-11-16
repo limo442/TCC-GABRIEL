@@ -32,8 +32,15 @@ CREATE TABLE iam.usuarios (
     id SERIAL PRIMARY KEY,
     username VARCHAR(50) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
+    role VARCHAR(20) NOT NULL DEFAULT 'operador' CHECK (role IN ('admin', 'operador')),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tokens revogados permanecem bloqueados até a expiração.
+CREATE TABLE iam.tokens_revogados (
+    jti UUID PRIMARY KEY,
+    expires_at TIMESTAMPTZ NOT NULL
 );
 
 -- Create rentals table
@@ -71,8 +78,4 @@ INSERT INTO aluguel.clientes (cod, nome, endereco, telefone, data_nascimento) VA
 ('C002', 'Maria Oliveira', 'Rua B, 456', '(11) 98765-4321', '1985-05-15'),
 ('C003', 'Carlos Souza', 'Rua C, 789', '(11) 99999-9999', '1992-10-20');
 
-INSERT INTO iam.usuarios (username, password, created_at) VALUES
-('admin', '$2a$10$mHaax3.qdukxe07mXNpwO.qZcaQy7QDgFSgFPVmi2uGg03y0p3p2.', NOW()),
-('operator1', '$2a$10$mHaax3.qdukxe07mXNpwO.qZcaQy7QDgFSgFPVmi2uGg03y0p3p2.', NOW());
-
--- Note: Passwords are bcrypt hashed. Plaintext: 'admin123' for admin, 'op123' for operator1.
+-- Sem senhas padrão públicas: crie o primeiro admin via npm run create-admin.
