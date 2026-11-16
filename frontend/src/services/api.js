@@ -46,6 +46,8 @@ export const veiculosAPI = {
 export const usuariosAPI = {
   list: (params = {}) => api.get('/usuarios', { params }).then(res => res.data),
   create: (data) => api.post('/usuarios', data),
+  update: (id, data) => api.put(`/usuarios/${id}`, data),
+  delete: (id) => api.delete(`/usuarios/${id}`),
 };
 
 // --- Clientes ---
