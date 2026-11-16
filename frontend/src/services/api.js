@@ -35,6 +35,30 @@ api.interceptors.response.use(
   }
 );
 
+
+// --- Portal público e proteção de dados ---
+export const publicoAPI = {
+  listVeiculos: () => api.get('/publico/veiculos').then(res => res.data),
+  solicitar: (data) => api.post('/publico/solicitacoes', data).then(res => res.data),
+  privacidade: () => api.get('/publico/politica-privacidade').then(res => res.data),
+  termos: () => api.get('/publico/termos-uso').then(res => res.data),
+};
+
+export const solicitacoesAPI = {
+  list: (params = {}) => api.get('/solicitacoes', { params }).then(res => res.data),
+  aprovar: (id) => api.put(`/solicitacoes/${id}/aprovar`).then(res => res.data),
+  recusar: (id) => api.put(`/solicitacoes/${id}/recusar`).then(res => res.data),
+  excluirDados: (id) => api.delete(`/solicitacoes/${id}/dados`).then(res => res.data),
+};
+
+export const integracoesAPI = {
+  ufs: () => api.get('/integracoes/ufs').then(res => res.data),
+};
+
+export const auditoriaAPI = {
+  list: () => api.get('/auditoria').then(res => res.data),
+};
+
 // --- Dashboard ---
 export const dashboardAPI = {
   get: () => api.get('/dashboard').then(res => res.data),
