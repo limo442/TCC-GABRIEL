@@ -18,4 +18,20 @@ function paginate(results, page, pageSize) {
   };
 }
 
-module.exports = { paginate };
+// Retorna 400 para paginação inválida antes de construir uma consulta ao banco.
+function parsePagination(query) {
+  const rawPage = query.page === undefined ? '0' : String(query.page);
+  const rawSize = query.pageSize === undefined ? '10' : String(query.pageSize);
+  if (!/^(0|[1-9]\\d*)$/.test(rawPage) || !/^[1-9]\\d*$/.test(rawSize)) {
+    return null;
+  }
+  const pageNum = Number(rawPage);
+  const size = Number(rawSize);
+  if (!Number.isSafeInteger(pageNum) || pageNum > 1000000 ||
+      !Number.isSafeInteger(size) || size > 100) {
+    return null;
+  }
+  return { pageNum, size };
+}
+
+module.exports = { paginate, parsePagination };
