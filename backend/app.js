@@ -55,7 +55,7 @@ app.use((req, res) => {
     code: 'NOT_FOUND',
     type: 'NOT_FOUND',
     message: 'Rota não encontrada',
-    detailedMessage: `${req.method} ${req.originalUrl} não encontrado`,
+    detailedMessage: 'Verifique o endereço solicitado',
   });
 });
 
@@ -66,7 +66,7 @@ app.use((err, req, res, next) => {
     code: 'INTERNAL_ERROR',
     type: 'INTERNAL_SERVER_ERROR',
     message: 'Erro interno do servidor',
-    detailedMessage: err.message,
+    detailedMessage: 'Consulte o administrador do sistema',
   });
 });
 

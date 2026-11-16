@@ -286,3 +286,33 @@ test('integração externa IBGE converte dados de localidades em resposta limita
     await new Promise(resolve => upstream.close(resolve));
   }
 });
+
+test('consultas rejeitam paginação inválida', async () => {
+  for (const endpoint of ['/veiculos', '/clientes', '/alugueis']) {
+    const invalid = await api(endpoint + '?page=-1&pageSize=abc', { token: adminToken });
+    assert.equal(invalid.status, 400);
+    const valid = await api(endpoint + '?page=0&pageSize=2', { token: adminToken });
+    assert.equal(valid.status, 200);
+    assert.ok(valid.data.items.length <= 2);
+  }
+});
+
+test('identificadores de rotas devem ser números positivos', async () => {
+  for (const endpoint of ['/veiculos', '/clientes', '/alugueis']) {
+    const r = await api(endpoint + '/abc', { token: adminToken });
+    assert.equal(r.status, 400);
+  }
+});
+
+test('dados incompletos são rejeitados pelos validadores', async () => {
+  const vehicle = await api('/veiculos', {
+    method: 'POST', token: adminToken,
+    body: { marca: 'Marca', modelo: 'Modelo', categoria: 'Sedan',
+      ano_fabricacao: 2024, placa: 'AAA1234', valor_diaria: -3 }
+  });
+  assert.equal(vehicle.status, 400);
+  const customer = await api('/clientes', {
+    method: 'POST', token: adminToken, body: { nome: 'Pessoa sem código' }
+  });
+  assert.equal(customer.status, 400);
+});
