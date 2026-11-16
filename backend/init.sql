@@ -65,6 +65,37 @@ CREATE UNIQUE INDEX uq_veiculo_locacao_aberta
 ON aluguel.alugueis (veiculo_id)
 WHERE status IN ('reservado', 'ativo');
 
+
+-- Pedidos públicos não bloqueiam veículos; aprovação transforma o pedido em reserva.
+CREATE TABLE aluguel.solicitacoes (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    veiculo_id INTEGER NOT NULL REFERENCES aluguel.veiculos(id),
+    nome VARCHAR(120) NOT NULL,
+    email VARCHAR(180) NOT NULL,
+    telefone VARCHAR(20),
+    data_saida DATE NOT NULL,
+    dias_previsto INTEGER NOT NULL CHECK (dias_previsto BETWEEN 1 AND 90),
+    status VARCHAR(20) NOT NULL DEFAULT 'pendente'
+      CHECK (status IN ('pendente','aprovada','recusada')),
+    aceite_politica_em TIMESTAMPTZ NOT NULL,
+    atendida_por INTEGER REFERENCES iam.usuarios(id) ON DELETE SET NULL,
+    aluguel_id INTEGER REFERENCES aluguel.alugueis(id) ON DELETE SET NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_solicitacoes_status_criacao ON aluguel.solicitacoes(status, created_at DESC);
+
+-- Registro de operações sem payload, senhas, email, tokens ou endereço IP.
+CREATE TABLE iam.auditoria (
+    id BIGSERIAL PRIMARY KEY,
+    usuario_id INTEGER REFERENCES iam.usuarios(id) ON DELETE SET NULL,
+    evento VARCHAR(80) NOT NULL,
+    recurso VARCHAR(90) NOT NULL,
+    codigo_http INTEGER NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_auditoria_criacao ON iam.auditoria(created_at DESC);
+
 -- Insert sample data
 INSERT INTO aluguel.veiculos (marca, modelo, categoria, ano_fabricacao, placa, valor_diaria, disponivel) VALUES
 ('Toyota', 'Corolla', 'Sedan', 2022, 'ABC1234', 150.00, true),
