@@ -21,9 +21,16 @@ const veiculoIdSchema = Joi.object({
 
 // Usuario schemas
 const usuarioInputSchema = Joi.object({
-  username: Joi.string().min(3).max(255).required(),
-  password: Joi.string().min(6).max(255).required()
+  username: Joi.string().min(3).max(50).required(),
+  password: Joi.string().min(8).max(255).required(),
+  role: Joi.string().valid('admin', 'operador').default('operador')
 });
+
+const usuarioUpdateSchema = Joi.object({
+  username: Joi.string().min(3).max(50),
+  password: Joi.string().min(8).max(255),
+  role: Joi.string().valid('admin', 'operador')
+}).min(1);
 
 const usuarioIdSchema = Joi.object({
   id: Joi.number().integer().positive().required()
@@ -91,6 +98,7 @@ module.exports = {
   veiculoInputSchema,
   veiculoIdSchema,
   usuarioInputSchema,
+  usuarioUpdateSchema,
   usuarioIdSchema,
   clienteInputSchema,
   clienteIdSchema,
