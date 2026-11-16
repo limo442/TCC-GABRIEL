@@ -253,6 +253,11 @@ test('solicitação recusada pode ter dados eliminados por usuário autenticado'
 });
 
 test('auditoria exige perfil de administrador', async () => {
-  assert.equal((await api('/auditoria', { token: operatorToken })).status, 403);
+  // O token original do operador foi revogado no teste de logout.
+  const login = await api('/auth/login', {
+    method: 'POST', body: { username: 'test_operador', password: 'TesteForte123!' }
+  });
+  assert.equal(login.status, 200);
+  assert.equal((await api('/auditoria', { token: login.data.token })).status, 403);
   assert.equal((await api('/auditoria', { token: adminToken })).status, 200);
 });
