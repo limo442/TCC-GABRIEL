@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
-const { paginate } = require('../utils/pagination');
+const { paginate, parsePagination } = require('../utils/pagination');
 const { 
   aluguelInputSchema, 
   aluguelIdSchema, 
@@ -22,8 +22,11 @@ const STATUS_TRANSITIONS = {
 router.get('/', async (req, res) => {
   try {
     const { status, cliente_id, veiculo_id, page = 0, pageSize = 10 } = req.query;
-    const pageNum = parseInt(page);
-    const size = parseInt(pageSize);
+    const paging = parsePagination(req.query);
+    if (!paging) return res.status(400).json({
+      code: 'VALIDATION_ERROR', message: 'Paginação inválida'
+    });
+    const { pageNum, size } = paging;
     
     let query = `
       SELECT a.*, 
@@ -60,7 +63,7 @@ router.get('/', async (req, res) => {
     const paginated = paginate(result.rows, pageNum, size);
     res.json(paginated);
   } catch (err) {
-    res.status(500).json({ code: 'DB_ERROR', type: 'INTERNAL_SERVER_ERROR', message: 'Erro ao listar aluguéis', detailedMessage: err.message });
+    res.status(500).json({ code: 'DB_ERROR', type: 'INTERNAL_SERVER_ERROR', message: 'Erro ao listar aluguéis', detailedMessage: 'Consulte o administrador do sistema' });
   }
 });
 
@@ -81,7 +84,7 @@ router.get('/:id', async (req, res) => {
     if (result.rows.length === 0) return res.status(404).json({ code: 'RENTAL_NOT_FOUND', type: 'NOT_FOUND', message: 'Aluguel não encontrado', detailedMessage: `Aluguel com id ${req.params.id} não existe` });
     res.json(result.rows[0]);
   } catch (err) {
-    res.status(500).json({ code: 'DB_ERROR', type: 'INTERNAL_SERVER_ERROR', message: 'Erro ao buscar aluguel', detailedMessage: err.message });
+    res.status(500).json({ code: 'DB_ERROR', type: 'INTERNAL_SERVER_ERROR', message: 'Erro ao buscar aluguel', detailedMessage: 'Consulte o administrador do sistema' });
   }
 });
 
@@ -214,7 +217,7 @@ router.delete('/:id', async (req, res) => {
     res.status(204).send();
   } catch (err) {
     await client.query('ROLLBACK');
-    res.status(500).json({ code: 'DB_ERROR', type: 'INTERNAL_SERVER_ERROR', message: 'Erro ao excluir aluguel', detailedMessage: err.message });
+    res.status(500).json({ code: 'DB_ERROR', type: 'INTERNAL_SERVER_ERROR', message: 'Erro ao excluir aluguel', detailedMessage: 'Consulte o administrador do sistema' });
   } finally {
     client.release();
   }
@@ -277,7 +280,7 @@ router.put('/:id/status', async (req, res) => {
     res.json(result.rows[0]);
   } catch (err) {
     await client.query('ROLLBACK');
-    res.status(500).json({ code: 'DB_ERROR', type: 'INTERNAL_SERVER_ERROR', message: 'Erro ao atualizar status', detailedMessage: err.message });
+    res.status(500).json({ code: 'DB_ERROR', type: 'INTERNAL_SERVER_ERROR', message: 'Erro ao atualizar status', detailedMessage: 'Consulte o administrador do sistema' });
   } finally {
     client.release();
   }
@@ -338,7 +341,7 @@ router.put('/:id/finalizar', async (req, res) => {
     res.json(result.rows[0]);
   } catch (err) {
     await client.query('ROLLBACK');
-    res.status(500).json({ code: 'DB_ERROR', type: 'INTERNAL_SERVER_ERROR', message: 'Erro ao finalizar aluguel', detailedMessage: err.message });
+    res.status(500).json({ code: 'DB_ERROR', type: 'INTERNAL_SERVER_ERROR', message: 'Erro ao finalizar aluguel', detailedMessage: 'Consulte o administrador do sistema' });
   } finally {
     client.release();
   }
