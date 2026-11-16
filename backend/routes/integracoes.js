@@ -9,7 +9,7 @@ router.get('/ufs', async (req, res) => {
     const timeout = setTimeout(() => controller.abort(), 5000);
     let response;
     try {
-      response = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome', {
+      response = await fetch(process.env.IBGE_API_URL || 'https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome', {
         signal: controller.signal,
         headers: { Accept: 'application/json' }
       });
