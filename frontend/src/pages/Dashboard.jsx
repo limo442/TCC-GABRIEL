@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Car, Users, FileText, TrendingUp, Clock, CheckCircle, XCircle, DollarSign } from 'lucide-react';
-import { veiculosAPI, clientesAPI, alugueisAPI } from '../services/api';
+import { dashboardAPI } from '../services/api';
 
 function StatCard({ icon: Icon, label, value, color, bg, testid }) {
   return (
@@ -56,30 +56,10 @@ export default function Dashboard() {
     async function load() {
       try {
         setError(null);
-        const [veiculos, clientes, alugueis] = await Promise.all([
-          veiculosAPI.list(),
-          clientesAPI.list(),
-          alugueisAPI.list(),
-        ]);
-
-        const v = veiculos.items;
-        const a = alugueis.items;
-
-        const receita = a
-          .filter(r => r.status === 'concluido' && r.valor_realizado)
-          .reduce((sum, r) => sum + parseFloat(r.valor_realizado), 0);
-
-        setStats({
-          totalVeiculos: v.length,
-          disponiveis: v.filter(x => x.disponivel).length,
-          ativos: a.filter(x => x.status === 'ativo').length,
-          reservados: a.filter(x => x.status === 'reservado').length,
-          concluidos: a.filter(x => x.status === 'concluido').length,
-          cancelados: a.filter(x => x.status === 'cancelado').length,
-          totalClientes: clientes.items.length,
-          receita,
-        });
-        setRecentRentals(a.slice(0, 8));
+        const data = await dashboardAPI.get();
+        const { recentRentals, ...indicadores } = data;
+        setStats(indicadores);
+        setRecentRentals(recentRentals);
       } catch (e) {
         setError(e.response?.data?.message || e.message || 'Erro ao carregar dados');
       } finally {
