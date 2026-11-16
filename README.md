@@ -2,11 +2,12 @@
 
 Aplicação acadêmica com React, Node.js/Express, PostgreSQL, JWT e Docker Compose.
 
-**Branch de revisão:** `entrega0911`. A branch `main` permanece como histórico original.
-**Escopo:** cadastro de veículos, clientes e usuários, reservas e ciclo administrativo
-de locação, autenticação de funcionários, dashboard agregado e testes de integração.
-**Limitação:** RF12 (reserva em autoatendimento público) está planejado para evolução futura,
-não implementado nesta versão. O código não deve ser considerado pronto para produção.
+**Versão acadêmica — Entrega 5 (16/11/2026):** requisitos funcionais RF01–RF13 implementados no código, incluindo RF12 (consulta pública de veículos, solicitação de reserva e análise da equipe).
+**Branches exigidas:** `entrega0911` preservada para Entrega 4; `main` para desenvolvimento e versão atual.
+**Validação automatizada:** 14 testes de integração aprovados e build React aprovado no [GitHub Actions #70](https://github.com/limo442/TCC-GABRIEL/actions/runs/43905719073) em 16/11/2026.
+**Escopo acadêmico:** a solicitação pública só vira reserva após aprovação administrativa. O sistema não processa pagamentos. Testes automatizados não substituem inspeção manual nem certificam conformidade legal integral com a LGPD.
+
+Consulte [matriz da Entrega 5](docs/entrega5.md) e [avaliação de LGPD](docs/lgpd.md). A monografia e o resumo expandido são **documentos separados**, obrigatórios na entrega ao professor.
 
 ## Requisitos
 
@@ -16,10 +17,10 @@ não implementado nesta versão. O código não deve ser considerado pronto para
 
 ## Instalação (ambiente novo)
 
-1. Obtenha a branch de revisão:
+1. Clone o repositório. Por padrão, o Git baixa a `main`, a versão que aparece ao abrir o link principal:
 
 ```bash
-git clone --branch entrega0911 https://github.com/limo442/TCC-GABRIEL.git
+git clone https://github.com/limo442/TCC-GABRIEL.git
 cd TCC-GABRIEL
 ```
 
@@ -89,7 +90,8 @@ A migração:
 - renomeia `end_date` para `data_entrega`, quando aplicável;
 - impede mais de uma reserva/locação aberta para cada veículo;
 - adiciona perfis `admin` e `operador`;
-- adiciona a tabela de tokens JWT revogados.
+- adiciona a tabela de tokens JWT revogados;
+- cria a fila de solicitações de autoatendimento e a trilha de auditoria.
 
 **Atenção:** se existirem reservas abertas duplicadas, a criação do índice único falhará.
 Resolva as duplicidades após verificar os dados reais antes de prosseguir.
@@ -100,7 +102,7 @@ Senhas antigas de demonstração precisam ser substituídas.
 
 O arquivo `backend/tests/integration.test.js` contém testes HTTP usando PostgreSQL:
 autenticação, papéis, CRUD de usuários, concorrência de reservas, finalização de locação,
-dashboard e revogação de tokens. Os testes **apagam e recriam os schemas** no banco
+dashboard, RF12/autoatendimento, privacidade, auditoria, integração simulada com IBGE e revogação de tokens. Os testes **apagam e recriam os schemas** no banco
 `aluguel_test`, nunca devem ser executados no banco real.
 
 ```bash
@@ -121,7 +123,8 @@ guarde a saída e o status dos jobs como evidências para o TCC.
 | Registrar veículos, clientes e locações | Sim | Sim |
 | Consultar usuários | Sim | Sim, para selecionar responsável |
 | Criar, alterar e excluir usuários | Sim | Não |
-| Autoatendimento público | Não implementado | Não implementado |
+| Consultar solicitações públicas, aprovar e recusar | Sim | Sim |
+| Autoatendimento público: catálogo e envio de solicitação | Público, sem login | Público, sem login |
 
 O JWT expira em 8 horas. O logout revoga o token no banco. As rotas administrativas
 não aceitam API Keys genéricas. Os usuários são autenticados no banco em cada requisição.
@@ -145,7 +148,7 @@ frontend/
 .github/workflows/ci.yml
 ```
 
-## Endpoint administrativos
+## Endpoints da API (rotas administrativas exigem JWT)
 
 - `POST /api/auth/login` — login público
 - `POST /api/auth/logout` — revoga o JWT
@@ -156,15 +159,26 @@ frontend/
 - `PUT /api/alugueis/:id/status` — ativar ou cancelar
 - `PUT /api/alugueis/:id/finalizar` — finalizar e devolver o veículo
 - `GET /api/dashboard` — indicadores agregados reais do PostgreSQL
+- `GET /api/auditoria` — histórico de operações, somente administrador
+- `GET /api/solicitacoes`, `PUT /api/solicitacoes/:id/aprovar` e `PUT /api/solicitacoes/:id/recusar` — gestão de pedidos públicos
+- `DELETE /api/solicitacoes/:id/dados` — eliminação de pedido recusado por funcionário autenticado
+- `GET /api/integracoes/ufs` — localidades do IBGE, somente dados públicos
+- **Público, sem JWT:** `GET /api/publico/veiculos`, `POST /api/publico/solicitacoes`, `GET /api/publico/termos-uso`, `GET /api/publico/politica-privacidade`
+
+Páginas públicas no React: `/autoatendimento`, `/termos-uso` e `/politica-privacidade`.
+A área administrativa inclui as telas de Solicitações e Auditoria.
 
 As rotas protegidas exigem `Authorization: Bearer <token>`.
 Ao finalizar ou cancelar uma locação, a disponibilidade do veículo é restaurada.
 
 ## Escopo acadêmico e evidências
 
-A documentação da Entrega 4 deve apresentar o que foi efetivamente testado. Para
-verificações reprodutíveis, consulte `docs/validacao-entrega4.md`.
-A monografia deve refletir os recursos realmente implementados e preservar RF12
-como evolução futura até existir um fluxo público seguro com identificação do cliente.
+A Entrega 4 está preservada em `entrega0911` e seu checklist está em
+`docs/validacao-entrega4.md`. A versão de desenvolvimento está em `main`.
+Para a Entrega 5, consulte `docs/entrega5.md` e `docs/lgpd.md`.
+Os fluxos críticos têm testes de integração no CI, mas a avaliação acadêmica
+também exige a monografia final, os diagramas e o resumo expandido, que devem
+ser enviados nos locais orientados pelo professor. **Não invente evidências de
+operação real ou diga que existe certificação formal de conformidade LGPD.**
 
 **Não publique arquivos .env, senhas, tokens ou dados de clientes reais.**
