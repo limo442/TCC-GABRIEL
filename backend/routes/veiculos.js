@@ -7,7 +7,7 @@ const { veiculoInputSchema, veiculoIdSchema } = require('../validation/schemas')
 // GET /api/veiculos
 router.get('/', async (req, res) => {
   try {
-    const { disponivel, categoria, marca, modelo, page = 0, pageSize = 10 } = req.query;
+    const { disponivel, categoria, marca, modelo } = req.query;
     const paging = parsePagination(req.query);
     if (!paging) return res.status(400).json({
       code: 'VALIDATION_ERROR', message: 'Paginação inválida'
@@ -49,6 +49,8 @@ router.get('/', async (req, res) => {
 
 // GET /api/veiculos/:id
 router.get('/:id', async (req, res) => {
+  const { error: idError } = veiculoIdSchema.validate(req.params);
+  if (idError) return res.status(400).json({ code: 'VALIDATION_ERROR', message: 'ID inválido' });
   try {
     const result = await db.query('SELECT * FROM aluguel.veiculos WHERE id = $1', [req.params.id]);
     if (result.rows.length === 0) {
@@ -150,6 +152,8 @@ router.put('/:id', async (req, res) => {
 
 // DELETE /api/veiculos/:id
 router.delete('/:id', async (req, res) => {
+  const { error: idError } = veiculoIdSchema.validate(req.params);
+  if (idError) return res.status(400).json({ code: 'VALIDATION_ERROR', message: 'ID inválido' });
   try {
     const result = await db.query('DELETE FROM aluguel.veiculos WHERE id = $1 RETURNING id', [req.params.id]);
     if (result.rows.length === 0) return res.status(404).json({ code: 'VEHICLE_NOT_FOUND', type: 'NOT_FOUND', message: 'Veículo não encontrado', detailedMessage: `Veículo com id ${req.params.id} não existe` });
