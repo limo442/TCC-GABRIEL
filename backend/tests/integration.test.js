@@ -104,6 +104,9 @@ test('administrador cria, edita e exclui usuários', async () => {
     method: 'DELETE', token: adminToken
   })).status, 204);
   assert.equal((await api('/usuarios/1', { method: 'DELETE', token: adminToken })).status, 409);
+  assert.equal((await api('/usuarios/1', {
+    method: 'PUT', token: adminToken, body: { role: 'operador' }
+  })).status, 409);
 });
 
 test('reserva concorrente não duplica veículo', async () => {
@@ -120,6 +123,28 @@ test('reserva concorrente não duplica veículo', async () => {
   rentalId = requests.find(x => x.status === 201).data.id;
   const count = await db.query("SELECT COUNT(*)::int AS n FROM aluguel.alugueis WHERE veiculo_id=1 AND status IN ('reservado','ativo')");
   assert.equal(count.rows[0].n, 1);
+});
+
+test('integridade da disponibilidade e edição das locações', async () => {
+  const veiculo = await api('/veiculos/1', { token: adminToken });
+  assert.equal(veiculo.status, 200);
+  const attempt = await api('/veiculos/1', {
+    method: 'PUT', token: adminToken,
+    body: {
+      marca: veiculo.data.marca, modelo: veiculo.data.modelo,
+      categoria: veiculo.data.categoria,
+      ano_fabricacao: veiculo.data.ano_fabricacao,
+      placa: veiculo.data.placa,
+      valor_diaria: Number(veiculo.data.valor_diaria),
+      disponivel: true
+    }
+  });
+  assert.equal(attempt.status, 409);
+
+  const forbidden = await api(`/alugueis/${rentalId}`, {
+    method: 'PUT', token: adminToken, body: { veiculo_id: 2 }
+  });
+  assert.equal(forbidden.status, 400);
 });
 
 test('transições de locação e disponibilidade do veículo', async () => {
