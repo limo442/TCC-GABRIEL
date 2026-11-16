@@ -1,0 +1,11 @@
+# Secrets and local environment
+.env
+**/.env
+**/.env.local
+**/.env.production
+node_modules/
+**/node_modules/
+dist/
+build/
+coverage/
+*.log
