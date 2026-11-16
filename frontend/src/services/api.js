@@ -28,6 +28,11 @@ api.interceptors.response.use(
   }
 );
 
+// --- Dashboard ---
+export const dashboardAPI = {
+  get: () => api.get('/dashboard').then(res => res.data),
+};
+
 // --- Veículos ---
 export const veiculosAPI = {
   list: (params = {}) => api.get('/veiculos', { params }).then(res => res.data),
