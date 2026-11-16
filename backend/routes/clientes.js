@@ -1,15 +1,18 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
-const { paginate } = require('../utils/pagination');
+const { paginate, parsePagination } = require('../utils/pagination');
 const { clienteInputSchema, clienteIdSchema } = require('../validation/schemas');
 
 // GET /api/clientes
 router.get('/', async (req, res) => {
   try {
     const { page = 0, pageSize = 10 } = req.query;
-    const pageNum = parseInt(page);
-    const size = parseInt(pageSize);
+    const paging = parsePagination(req.query);
+    if (!paging) return res.status(400).json({
+      code: 'VALIDATION_ERROR', message: 'Paginação inválida'
+    });
+    const { pageNum, size } = paging;
     
     let query = 'SELECT * FROM aluguel.clientes';
     query += ' ORDER BY id ASC';
@@ -19,7 +22,7 @@ router.get('/', async (req, res) => {
     const paginated = paginate(result.rows, pageNum, size);
     res.json(paginated);
   } catch (err) {
-    res.status(500).json({ code: 'DB_ERROR', type: 'INTERNAL_SERVER_ERROR', message: 'Erro ao listar clientes', detailedMessage: err.message });
+    res.status(500).json({ code: 'DB_ERROR', type: 'INTERNAL_SERVER_ERROR', message: 'Erro ao listar clientes', detailedMessage: 'Consulte o administrador do sistema' });
   }
 });
 
@@ -30,7 +33,7 @@ router.get('/:id', async (req, res) => {
     if (result.rows.length === 0) return res.status(404).json({ code: 'CLIENT_NOT_FOUND', type: 'NOT_FOUND', message: 'Cliente não encontrado', detailedMessage: `Cliente com id ${req.params.id} não existe` });
     res.json(result.rows[0]);
   } catch (err) {
-    res.status(500).json({ code: 'DB_ERROR', type: 'INTERNAL_SERVER_ERROR', message: 'Erro ao buscar cliente', detailedMessage: err.message });
+    res.status(500).json({ code: 'DB_ERROR', type: 'INTERNAL_SERVER_ERROR', message: 'Erro ao buscar cliente', detailedMessage: 'Consulte o administrador do sistema' });
   }
 });
 
@@ -57,7 +60,7 @@ router.post('/', async (req, res) => {
     res.status(201).json(result.rows[0]);
   } catch (err) {
     if (err.code === '23505') return res.status(400).json({ code: 'DUPLICATE_COD', type: 'BAD_REQUEST', message: 'Código já cadastrado', detailedMessage: 'O código informado já existe' });
-    res.status(500).json({ code: 'DB_ERROR', type: 'INTERNAL_SERVER_ERROR', message: 'Erro ao cadastrar cliente', detailedMessage: err.message });
+    res.status(500).json({ code: 'DB_ERROR', type: 'INTERNAL_SERVER_ERROR', message: 'Erro ao cadastrar cliente', detailedMessage: 'Consulte o administrador do sistema' });
   }
 });
 
@@ -107,7 +110,7 @@ router.put('/:id', async (req, res) => {
     res.json(result.rows[0]);
   } catch (err) {
     if (err.code === '23505') return res.status(400).json({ code: 'DUPLICATE_COD', type: 'BAD_REQUEST', message: 'Código já cadastrado', detailedMessage: 'O código informado já existe' });
-    res.status(500).json({ code: 'DB_ERROR', type: 'INTERNAL_SERVER_ERROR', message: 'Erro ao atualizar cliente', detailedMessage: err.message });
+    res.status(500).json({ code: 'DB_ERROR', type: 'INTERNAL_SERVER_ERROR', message: 'Erro ao atualizar cliente', detailedMessage: 'Consulte o administrador do sistema' });
   }
 });
 
@@ -119,7 +122,7 @@ router.delete('/:id', async (req, res) => {
     res.status(204).send();
   } catch (err) {
     if (err.code === '23503') return res.status(400).json({ code: 'CLIENT_IN_USE', type: 'BAD_REQUEST', message: 'Cliente possui aluguéis vinculados', detailedMessage: 'Não é possível excluir um cliente com aluguéis associados' });
-    res.status(500).json({ code: 'DB_ERROR', type: 'INTERNAL_SERVER_ERROR', message: 'Erro ao excluir cliente', detailedMessage: err.message });
+    res.status(500).json({ code: 'DB_ERROR', type: 'INTERNAL_SERVER_ERROR', message: 'Erro ao excluir cliente', detailedMessage: 'Consulte o administrador do sistema' });
   }
 });
 
