@@ -7,7 +7,6 @@ const { clienteInputSchema, clienteIdSchema } = require('../validation/schemas')
 // GET /api/clientes
 router.get('/', async (req, res) => {
   try {
-    const { page = 0, pageSize = 10 } = req.query;
     const paging = parsePagination(req.query);
     if (!paging) return res.status(400).json({
       code: 'VALIDATION_ERROR', message: 'Paginação inválida'
@@ -28,6 +27,8 @@ router.get('/', async (req, res) => {
 
 // GET /api/clientes/:id
 router.get('/:id', async (req, res) => {
+  const { error: idError } = clienteIdSchema.validate(req.params);
+  if (idError) return res.status(400).json({ code: 'VALIDATION_ERROR', message: 'ID inválido' });
   try {
     const result = await db.query('SELECT * FROM aluguel.clientes WHERE id = $1', [req.params.id]);
     if (result.rows.length === 0) return res.status(404).json({ code: 'CLIENT_NOT_FOUND', type: 'NOT_FOUND', message: 'Cliente não encontrado', detailedMessage: `Cliente com id ${req.params.id} não existe` });
@@ -116,6 +117,8 @@ router.put('/:id', async (req, res) => {
 
 // DELETE /api/clientes/:id
 router.delete('/:id', async (req, res) => {
+  const { error: idError } = clienteIdSchema.validate(req.params);
+  if (idError) return res.status(400).json({ code: 'VALIDATION_ERROR', message: 'ID inválido' });
   try {
     const result = await db.query('DELETE FROM aluguel.clientes WHERE id = $1 RETURNING id', [req.params.id]);
     if (result.rows.length === 0) return res.status(404).json({ code: 'CLIENT_NOT_FOUND', type: 'NOT_FOUND', message: 'Cliente não encontrado', detailedMessage: `Cliente com id ${req.params.id} não existe` });
