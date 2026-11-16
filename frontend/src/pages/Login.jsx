@@ -71,11 +71,6 @@ export default function Login({ onLogin }) {
             {loading ? 'Entrando...' : 'Entrar'}
           </button>
         </form>
-        <div className="login-hint">
-          <p>Usuários de teste:</p>
-          <p>admin / admin123</p>
-          <p>operator1 / op123</p>
-        </div>
       </div>
     </div>
   );
