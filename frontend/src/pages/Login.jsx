@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { api } from '../services/api';
 import './Login.css';
@@ -71,6 +71,8 @@ export default function Login({ onLogin }) {
             {loading ? 'Entrando...' : 'Entrar'}
           </button>
         </form>
+        <p className="mt-4 text-center text-sm"><Link to="/autoatendimento" className="text-blue-700 underline">Consultar veículos e solicitar reserva</Link></p>
+        <p className="mt-2 text-center text-xs"><Link to="/politica-privacidade" className="underline">Privacidade</Link> · <Link to="/termos-uso" className="underline">Termos de Uso</Link></p>
       </div>
     </div>
   );
