@@ -14,6 +14,13 @@ let operatorToken;
 let createdUserId;
 let rentalId;
 
+// As datas de teste precisam permanecer futuras para que a suíte continue reprodutível.
+function futureDate(days = 10) {
+  const d = new Date();
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
 async function api(route, { method = 'GET', token, body, headers = {} } = {}) {
   const response = await fetch(baseUrl + route, {
     method,
@@ -112,7 +119,7 @@ test('administrador cria, edita e exclui usuários', async () => {
 test('reserva concorrente não duplica veículo', async () => {
   const payload = {
     veiculo_id: 1, cliente_id: 1, usuario_id: 1,
-    data_saida: '2026-11-20', dias_previsto: 2,
+    data_saida: futureDate(10), dias_previsto: 2,
     valor_previsto: 300, forma_pagamento: 'pix'
   };
   const requests = await Promise.all([
@@ -150,7 +157,7 @@ test('integridade da disponibilidade e edição das locações', async () => {
 test('transições de locação e disponibilidade do veículo', async () => {
   const invalid = await api(`/alugueis/${rentalId}/finalizar`, {
     method: 'PUT', token: adminToken,
-    body: { data_entrega: '2026-11-22', valor_realizado: 300, forma_pagamento: 'pix', usuario_id: 1 }
+    body: { data_entrega: futureDate(12), valor_realizado: 300, forma_pagamento: 'pix', usuario_id: 1 }
   });
   assert.equal(invalid.status, 400);
 
@@ -161,7 +168,7 @@ test('transições de locação e disponibilidade do veículo', async () => {
 
   const finish = await api(`/alugueis/${rentalId}/finalizar`, {
     method: 'PUT', token: adminToken,
-    body: { data_entrega: '2026-11-22', valor_realizado: 320, forma_pagamento: 'pix', usuario_id: 1 }
+    body: { data_entrega: futureDate(12), valor_realizado: 320, forma_pagamento: 'pix', usuario_id: 1 }
   });
   assert.equal(finish.status, 200);
   assert.equal(finish.data.status, 'concluido');
@@ -204,7 +211,7 @@ test('portal público expõe catálogo mínimo, termos e política de privacidad
 test('RF12: solicitação pública, aprovação administrativa e conversão em reserva', async () => {
   const body = {
     veiculo_id: 2, nome: 'Pessoa de Teste', email: 'exemplo@example.com',
-    telefone: '', data_saida: '2026-12-03', dias_previsto: 3,
+    telefone: '', data_saida: futureDate(15), dias_previsto: 3,
     aceite_politica: true
   };
   const rejected = await api('/publico/solicitacoes', {
@@ -238,7 +245,7 @@ test('solicitação recusada pode ter dados eliminados por usuário autenticado'
   const requested = await api('/publico/solicitacoes', {
     method: 'POST',
     body: { veiculo_id: 3, nome: 'Outra Pessoa de Teste', email: 'teste@example.com',
-      data_saida: '2026-12-04', dias_previsto: 1, aceite_politica: true }
+      data_saida: futureDate(16), dias_previsto: 1, aceite_politica: true }
   });
   assert.equal(requested.status, 201);
   const id = requested.data.protocolo;
