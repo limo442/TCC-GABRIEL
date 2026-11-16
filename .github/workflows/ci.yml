@@ -2,7 +2,7 @@ name: Testes do TCC
 
 on:
   push:
-    branches: [entrega0911]
+    branches: [main, entrega0911]
   pull_request:
     branches: [main]
 
