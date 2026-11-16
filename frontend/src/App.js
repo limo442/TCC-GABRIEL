@@ -55,7 +55,7 @@ function AppContent() {
           <Route index element={<Dashboard />} />
           <Route path="veiculos" element={<Veiculos />} />
           <Route path="clientes" element={<Clientes />} />
-          <Route path="usuarios" element={<Usuarios />} />
+          <Route path="usuarios" element={JSON.parse(localStorage.getItem('user') || '{}').role === 'admin' ? <Usuarios /> : <Navigate to="/" replace />} />
           <Route path="alugueis" element={<Alugueis />} />
         </Route>
 
