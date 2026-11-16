@@ -8,6 +8,8 @@ import Clientes from './pages/Clientes';
 import Usuarios from './pages/Usuarios';
 import Alugueis from './pages/Alugueis';
 import Login from './pages/Login';
+import Autoatendimento, { PoliticaPrivacidade, TermosUso } from './pages/Autoatendimento';
+import Solicitacoes from './pages/Solicitacoes';
 import './App.css';
 
 // Component to handle redirects after login
@@ -46,6 +48,11 @@ function AppContent() {
     <>
       <Toaster position="top-right" richColors closeButton />
       <Routes>
+        {/* Autoatendimento e transparência: rotas públicas sem login. */}
+        <Route path="/autoatendimento" element={<Autoatendimento />} />
+        <Route path="/politica-privacidade" element={<PoliticaPrivacidade />} />
+        <Route path="/termos-uso" element={<TermosUso />} />
+
         {/* Public login route */}
         <Route path="/login" element={isAuthenticated ? <Navigate to="/" replace /> : <Login onLogin={handleLogin} />} />
 
@@ -56,6 +63,7 @@ function AppContent() {
           <Route path="clientes" element={<Clientes />} />
           <Route path="usuarios" element={JSON.parse(localStorage.getItem('user') || '{}').role === 'admin' ? <Usuarios /> : <Navigate to="/" replace />} />
           <Route path="alugueis" element={<Alugueis />} />
+          <Route path="solicitacoes" element={<Solicitacoes />} />
         </Route>
 
         {/* Catch-all route - redirect based on auth status */}
