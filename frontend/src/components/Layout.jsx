@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { NavLink, useLocation, useNavigate, Outlet } from 'react-router-dom';
 import { LayoutDashboard, Car, Users, UserCheck, FileText, Menu, X, ChevronRight, LogOut } from 'lucide-react';
 import { toast } from 'sonner';
+import { api } from '../services/api';
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -18,22 +19,19 @@ export default function Layout({ onLogout }) {
 
   const pageTitle = navItems.find(n => n.to === location.pathname)?.label || 'Aluguel de Carros';
 
-  const handleLogout = () => {
-    const token = localStorage.getItem('authToken');
-    if (token) {
-      fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/logout`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` }
-      }).catch(() => {});
+  const handleLogout = async () => {
+    try {
+      await api.post('/auth/logout');
+    } catch (_) {
+      // Mesmo sem conexão, encerra a sessão local.
+    } finally {
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('user');
+      window.dispatchEvent(new Event('authChange'));
+      if (onLogout) onLogout();
+      toast.success('Sessão local encerrada');
+      navigate('/login', { replace: true });
     }
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('user');
-    window.dispatchEvent(new Event('authChange'));
-    if (onLogout) {
-      onLogout();
-    }
-    toast.success('Logout realizado com sucesso!');
-    navigate('/login', { replace: true });
   };
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
