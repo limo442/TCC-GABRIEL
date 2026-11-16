@@ -60,7 +60,7 @@ certificação jurídica de conformidade.
 
 ## 5. Evidências automatizadas
 
-- [GitHub Actions #70](https://github.com/limo442/TCC-GABRIEL/actions/runs/43905719073): **14 testes de integração aprovados** e build React aprovado (16/11/2026).
+- [GitHub Actions #78](https://github.com/limo442/TCC-GABRIEL/actions/runs/43906411274): **14 testes de integração aprovados** e build React aprovado (16/11/2026).
 - Fluxos cobertos: autenticação, permissões, CRUD de usuários,
   concorrência de reservas, ciclo de locação, totalização do dashboard,
   logout, catálogo público, pedido e aprovação, exclusão de dados,
