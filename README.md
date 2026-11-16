@@ -3,8 +3,8 @@
 Aplicação acadêmica com React, Node.js/Express, PostgreSQL, JWT e Docker Compose.
 
 **Versão acadêmica — Entrega 5 (16/11/2026):** requisitos funcionais RF01–RF13 implementados no código, incluindo RF12 (consulta pública de veículos, solicitação de reserva e análise da equipe).
-**Branches exigidas:** `entrega0911` preservada para Entrega 4; `main` para desenvolvimento e versão atual.
-**Validação automatizada:** 14 testes de integração aprovados e build React aprovado no [GitHub Actions #78](https://github.com/limo442/TCC-GABRIEL/actions/runs/43906411274) em 16/11/2026.
+**Branches do cronograma:** `entrega2809` e `entrega0911` estão disponíveis; `main` contém o código atual da Entrega 5. As branches foram criadas/revisadas posteriormente e seus nomes não comprovam envio nas datas originais.
+**Validação automatizada:** 14 testes de integração aprovados e build React aprovado no [GitHub Actions #81](https://github.com/limo442/TCC-GABRIEL/actions/runs/43906874373) em 16/11/2026.
 **Escopo acadêmico:** a solicitação pública só vira reserva após aprovação administrativa. O sistema não processa pagamentos. Testes automatizados não substituem inspeção manual nem certificam conformidade legal integral com a LGPD.
 
 Consulte [matriz da Entrega 5](docs/entrega5.md) e [avaliação de LGPD](docs/lgpd.md). A monografia e o resumo expandido são **documentos separados**, obrigatórios na entrega ao professor.
