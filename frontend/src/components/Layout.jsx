@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, useLocation, useNavigate, Outlet } from 'react-router-dom';
-import { LayoutDashboard, Car, Users, UserCheck, FileText, Menu, X, ChevronRight, LogOut } from 'lucide-react';
+import { LayoutDashboard, Car, Users, UserCheck, FileText, FileClock, ClipboardList, Menu, X, ChevronRight, LogOut } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../services/api';
 
@@ -10,6 +10,8 @@ const navItems = [
   { to: '/clientes', icon: Users, label: 'Clientes' },
   { to: '/usuarios', icon: UserCheck, label: 'Usuários' },
   { to: '/alugueis', icon: FileText, label: 'Aluguéis' },
+  { to: '/solicitacoes', icon: ClipboardList, label: 'Solicitações' },
+  { to: '/auditoria', icon: FileClock, label: 'Auditoria' },
 ];
 
 export default function Layout({ onLogout }) {
@@ -35,7 +37,7 @@ export default function Layout({ onLogout }) {
   };
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
-  const availableNav = navItems.filter(n => n.to !== '/usuarios' || user.role === 'admin');
+  const availableNav = navItems.filter(n => !['/usuarios','/auditoria'].includes(n.to) || user.role === 'admin');
 
   return (
     <div className="flex h-screen bg-[#F8F9FA] overflow-hidden">
