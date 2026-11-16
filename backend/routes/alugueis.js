@@ -21,7 +21,7 @@ const STATUS_TRANSITIONS = {
 // GET /api/alugueis
 router.get('/', async (req, res) => {
   try {
-    const { status, cliente_id, veiculo_id, page = 0, pageSize = 10 } = req.query;
+    const { status, cliente_id, veiculo_id } = req.query;
     const paging = parsePagination(req.query);
     if (!paging) return res.status(400).json({
       code: 'VALIDATION_ERROR', message: 'Paginação inválida'
@@ -69,6 +69,8 @@ router.get('/', async (req, res) => {
 
 // GET /api/alugueis/:id
 router.get('/:id', async (req, res) => {
+  const { error: idError } = aluguelIdSchema.validate(req.params);
+  if (idError) return res.status(400).json({ code: 'VALIDATION_ERROR', message: 'ID inválido' });
   try {
     const result = await db.query(`
       SELECT a.*, 
@@ -201,6 +203,8 @@ router.put('/:id', async (req, res) => {
 
 // DELETE /api/alugueis/:id
 router.delete('/:id', async (req, res) => {
+  const { error: idError } = aluguelIdSchema.validate(req.params);
+  if (idError) return res.status(400).json({ code: 'VALIDATION_ERROR', message: 'ID inválido' });
   const client = await db.connect();
   try {
     await client.query('BEGIN');
