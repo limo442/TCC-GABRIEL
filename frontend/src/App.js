@@ -10,6 +10,7 @@ import Alugueis from './pages/Alugueis';
 import Login from './pages/Login';
 import Autoatendimento, { PoliticaPrivacidade, TermosUso } from './pages/Autoatendimento';
 import Solicitacoes from './pages/Solicitacoes';
+import Auditoria from './pages/Auditoria';
 import './App.css';
 
 // Component to handle redirects after login
@@ -64,6 +65,7 @@ function AppContent() {
           <Route path="usuarios" element={JSON.parse(localStorage.getItem('user') || '{}').role === 'admin' ? <Usuarios /> : <Navigate to="/" replace />} />
           <Route path="alugueis" element={<Alugueis />} />
           <Route path="solicitacoes" element={<Solicitacoes />} />
+          <Route path="auditoria" element={JSON.parse(localStorage.getItem('user') || '{}').role === 'admin' ? <Auditoria /> : <Navigate to="/" replace />} />
         </Route>
 
         {/* Catch-all route - redirect based on auth status */}
