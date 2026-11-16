@@ -19,4 +19,14 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_veiculo_locacao_aberta
 ON aluguel.alugueis (veiculo_id)
 WHERE status IN ('reservado', 'ativo');
 
+-- Perfis e revogação de tokens para instalações anteriores.
+ALTER TABLE iam.usuarios ADD COLUMN IF NOT EXISTS role VARCHAR(20) NOT NULL DEFAULT 'operador';
+UPDATE iam.usuarios SET role = 'admin' WHERE username = 'admin';
+ALTER TABLE iam.usuarios DROP CONSTRAINT IF EXISTS usuarios_role_check;
+ALTER TABLE iam.usuarios ADD CONSTRAINT usuarios_role_check CHECK (role IN ('admin', 'operador'));
+CREATE TABLE IF NOT EXISTS iam.tokens_revogados (
+    jti UUID PRIMARY KEY,
+    expires_at TIMESTAMPTZ NOT NULL
+);
+
 COMMIT;
