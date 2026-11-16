@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const config = require('./config');
 const authenticate = require('./middleware/auth');
 
 const veiculosRouter = require('./routes/veiculos');
@@ -12,7 +13,7 @@ const dashboardRouter = require('./routes/dashboard');
 const app = express();
 const PORT = process.env.NODE_PORT || 8002;
 
-app.use(cors({ origin: '*' }));
+app.use(cors({ origin: config.corsOrigins }));
 app.use(express.json());
 
 // Health check (no auth required)
@@ -55,8 +56,10 @@ app.use((err, req, res, next) => {
   });
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`[Node.js] Servidor rodando na porta ${PORT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`[Node.js] Servidor rodando na porta ${PORT}`);
+  });
+}
 
 module.exports = app;
