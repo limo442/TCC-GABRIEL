@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
@@ -17,7 +17,6 @@ function AppContent() {
     return !!token;
   });
 
-  const location = useLocation();
 
   const handleLogin = useCallback(() => {
     setIsAuthenticated(true);
