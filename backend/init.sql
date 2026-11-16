@@ -43,7 +43,7 @@ CREATE TABLE aluguel.alugueis (
     cliente_id INTEGER REFERENCES aluguel.clientes(id),
     usuario_id INTEGER REFERENCES iam.usuarios(id),
     data_saida TIMESTAMP NOT NULL,
-    end_date TIMESTAMP,
+    data_entrega TIMESTAMP,
     dias_previsto INTEGER,
     valor_previsto DECIMAL(10, 2),
     valor_realizado DECIMAL(10, 2),
@@ -52,6 +52,11 @@ CREATE TABLE aluguel.alugueis (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Impede duas reservas ou locações abertas para o mesmo veículo.
+CREATE UNIQUE INDEX uq_veiculo_locacao_aberta
+ON aluguel.alugueis (veiculo_id)
+WHERE status IN ('reservado', 'ativo');
 
 -- Insert sample data
 INSERT INTO aluguel.veiculos (marca, modelo, categoria, ano_fabricacao, placa, valor_diaria, disponivel) VALUES
