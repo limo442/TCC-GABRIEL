@@ -286,3 +286,13 @@ test('integração externa IBGE converte dados de localidades em resposta limita
     await new Promise(resolve => upstream.close(resolve));
   }
 });
+
+test('consultas rejeitam paginação inválida', async () => {
+  for (const endpoint of ['/veiculos', '/clientes', '/alugueis']) {
+    const invalid = await api(endpoint + '?page=-1&pageSize=abc', { token: adminToken });
+    assert.equal(invalid.status, 400);
+    const valid = await api(endpoint + '?page=0&pageSize=2', { token: adminToken });
+    assert.equal(valid.status, 200);
+    assert.ok(valid.data.items.length <= 2);
+  }
+});
