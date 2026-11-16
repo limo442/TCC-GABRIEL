@@ -1,53 +1,43 @@
 const jwt = require('jsonwebtoken');
+const db = require('../db');
 const config = require('../config');
 
-/**
- * Middleware to authenticate requests using either API Key or JWT
- * API Key: For client portal (sent as X-API-Key header)
- * JWT: For user portal (sent as Authorization: Bearer <token> header)
- */
-const authenticate = (req, res, next) => {
-  // Check for API Key (client portal)
-  const apiKey = req.header(config.apiKeyHeader);
-  if (apiKey && config.validApiKeys.includes(apiKey)) {
-    // API Key authentication successful
-    req.authType = 'api-key';
-    req.user = { type: 'client' };
-    return next();
+// Somente JWT de funcionário tem acesso às rotas administrativas.
+// O perfil é buscado no banco em cada requisição, evitando privilégios antigos.
+async function authenticate(req, res, next) {
+  const header = req.header('Authorization') || '';
+  if (!header.startsWith('Bearer ')) {
+    return res.status(401).json({ code: 'UNAUTHORIZED', message: 'Token JWT obrigatório' });
   }
 
-  // Check for JWT (user portal)
-  const authHeader = req.header('Authorization');
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
-    
-    try {
-      const decoded = jwt.verify(token, config.jwtSecret);
-      // JWT authentication successful
-      req.authType = 'jwt';
-      req.user = {
-        id: decoded.id,
-        username: decoded.username,
-        type: 'user'
-      };
-      return next();
-    } catch (err) {
-      return res.status(401).json({
-        code: 'INVALID_TOKEN',
-        type: 'UNAUTHORIZED',
-        message: 'Token inválido ou expirado',
-        detailedMessage: err.message
-      });
+  let decoded;
+  try {
+    decoded = jwt.verify(header.slice(7), config.jwtSecret, { algorithms: ['HS256'] });
+    if (decoded.type !== 'user' || !decoded.sub || !decoded.jti) throw new Error('Token sem identificação válida');
+  } catch (_) {
+    return res.status(401).json({ code: 'INVALID_TOKEN', message: 'Token inválido ou expirado' });
+  }
+
+  try {
+    const result = await db.query(
+      `SELECT u.id, u.username, u.role,
+        EXISTS(SELECT 1 FROM iam.tokens_revogados t
+               WHERE t.jti = $2 AND t.expires_at > NOW()) AS revoked
+         FROM iam.usuarios u WHERE u.id = $1`,
+      [decoded.sub, decoded.jti]
+    );
+    if (!result.rows.length || result.rows[0].revoked) {
+      return res.status(401).json({ code: 'INVALID_TOKEN', message: 'Token revogado ou usuário inexistente' });
     }
+    const { id, username, role } = result.rows[0];
+    req.user = { id, username, role };
+    req.tokenJti = decoded.jti;
+    req.tokenExp = decoded.exp;
+    next();
+  } catch (err) {
+    console.error('Falha ao autenticar requisição:', err);
+    res.status(500).json({ code: 'AUTH_ERROR', message: 'Erro ao verificar autenticação' });
   }
-
-  // No valid authentication provided
-  return res.status(401).json({
-    code: 'UNAUTHORIZED',
-    type: 'UNAUTHORIZED',
-    message: 'Não autorizado',
-    detailedMessage: 'É necessário fornecer API Key ou token JWT válido'
-  });
-};
+}
 
 module.exports = authenticate;
