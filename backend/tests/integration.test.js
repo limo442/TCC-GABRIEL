@@ -190,3 +190,69 @@ test('logout revoga o token no servidor', async () => {
   const afterLogout = await api('/veiculos', { token: operatorToken });
   assert.equal(afterLogout.status, 401);
 });
+
+
+test('portal público expõe catálogo mínimo, termos e política de privacidade', async () => {
+  const list = await api('/publico/veiculos');
+  assert.equal(list.status, 200);
+  assert.equal(list.data.items.length > 0, true);
+  assert.equal('placa' in list.data.items[0], false);
+  assert.equal((await api('/publico/termos-uso')).status, 200);
+  assert.equal((await api('/publico/politica-privacidade')).status, 200);
+});
+
+test('RF12: solicitação pública, aprovação administrativa e conversão em reserva', async () => {
+  const body = {
+    veiculo_id: 2, nome: 'Pessoa de Teste', email: 'exemplo@invalid.test',
+    telefone: '', data_saida: '2026-12-03', dias_previsto: 3,
+    aceite_politica: true
+  };
+  const rejected = await api('/publico/solicitacoes', {
+    method: 'POST', body: { ...body, aceite_politica: false }
+  });
+  assert.equal(rejected.status, 400);
+
+  const requested = await api('/publico/solicitacoes', { method: 'POST', body });
+  assert.equal(requested.status, 201);
+  const id = requested.data.protocolo;
+  assert.ok(id);
+  const listDenied = await api('/solicitacoes');
+  assert.equal(listDenied.status, 401);
+  const requests = await api('/solicitacoes', { token: adminToken });
+  assert.equal(requests.status, 200);
+  assert.equal(requests.data.items.some(item => item.id === id), true);
+
+  const approved = await api(`/solicitacoes/${id}/aprovar`, {
+    method: 'PUT', token: adminToken
+  });
+  assert.equal(approved.status, 200);
+  assert.equal(approved.data.status, 'aprovada');
+  const vehicle = await db.query('SELECT disponivel FROM aluguel.veiculos WHERE id = 2');
+  assert.equal(vehicle.rows[0].disponivel, false);
+  assert.equal((await api(`/solicitacoes/${id}/aprovar`, {
+    method: 'PUT', token: adminToken
+  })).status, 409);
+});
+
+test('solicitação recusada pode ter dados eliminados por usuário autenticado', async () => {
+  const requested = await api('/publico/solicitacoes', {
+    method: 'POST',
+    body: { veiculo_id: 3, nome: 'Outra Pessoa de Teste', email: 'teste@invalid.test',
+      data_saida: '2026-12-04', dias_previsto: 1, aceite_politica: true }
+  });
+  assert.equal(requested.status, 201);
+  const id = requested.data.protocolo;
+  assert.equal((await api(`/solicitacoes/${id}/recusar`, {
+    method: 'PUT', token: adminToken
+  })).status, 200);
+  assert.equal((await api(`/solicitacoes/${id}/dados`, {
+    method: 'DELETE', token: adminToken
+  })).status, 204);
+  const count = await db.query('SELECT COUNT(*)::int AS n FROM aluguel.solicitacoes WHERE id = $1', [id]);
+  assert.equal(count.rows[0].n, 0);
+});
+
+test('auditoria exige perfil de administrador', async () => {
+  assert.equal((await api('/auditoria', { token: operatorToken })).status, 403);
+  assert.equal((await api('/auditoria', { token: adminToken })).status, 200);
+});
