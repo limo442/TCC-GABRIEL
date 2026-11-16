@@ -1,71 +1,48 @@
 const express = require('express');
-const router = express.Router();
+const { randomUUID } = require('crypto');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const db = require('../db');
 const config = require('../config');
+const authenticate = require('../middleware/auth');
+const router = express.Router();
 
-// POST /api/auth/login - Public route (no auth required)
 router.post('/login', async (req, res) => {
   try {
-    const { username, password } = req.body;
-
-    if (!username || !password) {
-      return res.status(400).json({ 
-        code: 'MISSING_CREDENTIALS', 
-        type: 'BAD_REQUEST', 
-        message: 'Username e senha são obrigatórios',
-        detailedMessage: 'Informe username e password no corpo da requisição'
-      });
+    const { username, password } = req.body || {};
+    if (typeof username !== 'string' || typeof password !== 'string' || !username || !password) {
+      return res.status(400).json({ code: 'MISSING_CREDENTIALS', message: 'Usuário e senha são obrigatórios' });
     }
-
-    const result = await db.query('SELECT * FROM iam.usuarios WHERE username = $1', [username]);
+    const result = await db.query('SELECT id, username, password, role FROM iam.usuarios WHERE username = $1', [username]);
     const user = result.rows[0];
-
-    if (!user) {
-      return res.status(401).json({ 
-        code: 'INVALID_CREDENTIALS', 
-        type: 'UNAUTHORIZED', 
-        message: 'Credenciais inválidas',
-        detailedMessage: 'Username ou senha incorretos'
-      });
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      return res.status(401).json({ code: 'INVALID_CREDENTIALS', message: 'Credenciais inválidas' });
     }
-
-    const isValid = await bcrypt.compare(password, user.password);
-    if (!isValid) {
-      return res.status(401).json({ 
-        code: 'INVALID_CREDENTIALS', 
-        type: 'UNAUTHORIZED', 
-        message: 'Credenciais inválidas',
-        detailedMessage: 'Username ou senha incorretos'
-      });
-    }
-
-    const token = jwt.sign(
-      { id: user.id, username: user.username, type: 'user' },
-      config.jwtSecret,
-      { expiresIn: '24h' }
-    );
-
-    res.json({ 
-      token, 
-      user: { id: user.id, username: user.username },
-      expiresIn: 86400 
+    const expiresIn = 8 * 60 * 60;
+    const token = jwt.sign({ sub: String(user.id), type: 'user' }, config.jwtSecret, {
+      algorithm: 'HS256',
+      jwtid: randomUUID(),
+      expiresIn
     });
+    res.json({ token, user: { id: user.id, username: user.username, role: user.role }, expiresIn });
   } catch (err) {
-    console.error('Login error:', err);
-    res.status(500).json({ 
-      code: 'INTERNAL_ERROR', 
-      type: 'INTERNAL_SERVER_ERROR', 
-      message: 'Erro ao processar login',
-      detailedMessage: err.message 
-    });
+    console.error('Erro no login:', err);
+    res.status(500).json({ code: 'INTERNAL_ERROR', message: 'Erro ao processar login' });
   }
 });
 
-// POST /api/auth/logout - Public route (optional, client-side token removal)
-router.post('/logout', (req, res) => {
-  res.json({ message: 'Logout realizado com sucesso' });
+// Logout revoga o identificador do JWT no PostgreSQL até sua expiração.
+router.post('/logout', authenticate, async (req, res) => {
+  try {
+    await db.query(
+      'INSERT INTO iam.tokens_revogados (jti, expires_at) VALUES ($1, to_timestamp($2)) ON CONFLICT (jti) DO NOTHING',
+      [req.tokenJti, req.tokenExp]
+    );
+    res.json({ message: 'Logout realizado com sucesso' });
+  } catch (err) {
+    console.error('Falha ao revogar token:', err);
+    res.status(500).json({ code: 'LOGOUT_ERROR', message: 'Erro ao encerrar sessão' });
+  }
 });
 
 module.exports = router;

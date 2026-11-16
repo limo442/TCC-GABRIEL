@@ -1,18 +1,27 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const config = require('./config');
 const authenticate = require('./middleware/auth');
 
 const veiculosRouter = require('./routes/veiculos');
 const usuariosRouter = require('./routes/usuarios');
 const clientesRouter = require('./routes/clientes');
 const alugueisRouter = require('./routes/alugueis');
+const dashboardRouter = require('./routes/dashboard');
+const publicoRouter = require('./routes/publico');
+const solicitacoesRouter = require('./routes/solicitacoes');
+const integracoesRouter = require('./routes/integracoes');
+const auditoriaRouter = require('./routes/auditoria');
+const audit = require('./middleware/audit');
 
 const app = express();
 const PORT = process.env.NODE_PORT || 8002;
 
-app.use(cors({ origin: '*' }));
-app.use(express.json());
+app.use(cors({ origin: config.corsOrigins }));
+app.disable('x-powered-by');
+app.use(express.json({ limit: '16kb' }));
+app.use(audit);
 
 // Health check (no auth required)
 app.get('/api/health', (req, res) => {
@@ -23,7 +32,11 @@ app.get('/api/health', (req, res) => {
 const authRouter = require('./routes/auth');
 app.use('/api/auth', authRouter);
 
-// Apply authentication middleware to all routes except health and auth
+// RF12: consulta e solicitação públicas, sem acesso a informações administrativas.
+app.use('/api/publico', publicoRouter);
+
+// Todas as operações administrativas passam por JWT.
+ // Apply authentication middleware to all routes except health, auth and public
 app.use(authenticate);
 
 // Routes
@@ -31,6 +44,10 @@ app.use('/api/veiculos', veiculosRouter);
 app.use('/api/usuarios', usuariosRouter);
 app.use('/api/clientes', clientesRouter);
 app.use('/api/alugueis', alugueisRouter);
+app.use('/api/dashboard', dashboardRouter);
+app.use('/api/solicitacoes', solicitacoesRouter);
+app.use('/api/integracoes', integracoesRouter);
+app.use('/api/auditoria', auditoriaRouter);
 
 // 404
 app.use((req, res) => {
@@ -53,8 +70,10 @@ app.use((err, req, res, next) => {
   });
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`[Node.js] Servidor rodando na porta ${PORT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`[Node.js] Servidor rodando na porta ${PORT}`);
+  });
+}
 
 module.exports = app;

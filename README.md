@@ -1,395 +1,184 @@
-# 🚗 TCC-GABRIEL - Sistema de Gestão de Aluguéis de Carros
+# TCC — Sistema de Gerenciamento de Aluguel de Veículos
 
-[![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
-[![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-blue.svg)](https://www.postgresql.org/)
-[![React](https://img.shields.io/badge/React-18+-61dafb.svg)](https://reactjs.org/)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+Aplicação acadêmica com React, Node.js/Express, PostgreSQL, JWT e Docker Compose.
 
-Sistema completo para gestão de aluguéis de carros com interface web moderna, API RESTful e banco de dados PostgreSQL.
+**Versão acadêmica — Entrega 5 (16/11/2026):** requisitos funcionais RF01–RF13 implementados no código, incluindo RF12 (consulta pública de veículos, solicitação de reserva e análise da equipe).
+**Branches exigidas:** `entrega0911` preservada para Entrega 4; `main` para desenvolvimento e versão atual.
+**Validação automatizada:** 14 testes de integração aprovados e build React aprovado no [GitHub Actions #70](https://github.com/limo442/TCC-GABRIEL/actions/runs/43905719073) em 16/11/2026.
+**Escopo acadêmico:** a solicitação pública só vira reserva após aprovação administrativa. O sistema não processa pagamentos. Testes automatizados não substituem inspeção manual nem certificam conformidade legal integral com a LGPD.
 
-## 📋 Sobre o Projeto
+Consulte [matriz da Entrega 5](docs/entrega5.md) e [avaliação de LGPD](docs/lgpd.md). A monografia e o resumo expandido são **documentos separados**, obrigatórios na entrega ao professor.
 
-O TCC-GABRIEL é uma aplicação full-stack desenvolvida como Trabalho de Conclusão de Curso, implementando um sistema completo de gestão de locadora de veículos. O sistema permite o cadastro e gerenciamento de veículos, clientes, usuários e aluguéis, com interface intuitiva e segura.
+## Requisitos
 
-### 🎯 Funcionalidades Principais
+- Docker e Docker Compose (recomendado)
+- Git (opcional)
+- Node.js 18+ para executar scripts fora do Docker
 
-- ✅ **Autenticação JWT** com login/logout seguro
-- ✅ **Dashboard** com estatísticas em tempo real
-- ✅ **CRUD completo** para Veículos, Clientes, Usuários e Aluguéis
-- ✅ **Interface responsiva** com design moderno
-- ✅ **API RESTful** documentada
-- ✅ **Banco de dados PostgreSQL** com esquemas organizados
-- ✅ **Containerização Docker** para fácil deploy
+## Instalação (ambiente novo)
 
-## 🛠️ Tecnologias Utilizadas
-
-### Backend
-- **Node.js** 18+ com Express.js
-- **PostgreSQL** 15+ com esquemas organizados
-- **JWT** para autenticação
-- **bcrypt** para hash de senhas
-- **Joi** para validação de dados
-
-### Frontend
-- **React** 18+ com React Router 6
-- **Tailwind CSS** para estilização
-- **Axios** para requisições HTTP
-- **Sonner** para notificações
-- **Lucide React** para ícones
-
-### Infraestrutura
-- **Docker** & Docker Compose
-- **Nginx** (implicito no desenvolvimento)
-- **ESLint** para qualidade de código
-
-## 📋 Pré-requisitos
-
-Antes de começar, você precisa ter instalado:
-
-- **Docker** 20.10+
-- **Docker Compose** 2.0+
-- **Git** (opcional, para clonar o repositório)
-
-```bash
-# Verificar instalação do Docker
-docker --version
-docker-compose --version
-```
-
-## 🚀 Como Executar
-
-### 1. Clonando o Repositório
+1. Clone o repositório. Por padrão, o Git baixa a `main`, a versão que aparece ao abrir o link principal:
 
 ```bash
 git clone https://github.com/limo442/TCC-GABRIEL.git
-cd tcc-gabriel
+cd TCC-GABRIEL
 ```
 
-### 2. Construindo e Executando com Docker
+2. Copie os três modelos de ambiente. No PowerShell use `Copy-Item` no lugar de `cp`.
 
 ```bash
-# Construir e iniciar todos os serviços
-docker-compose up --build
-
-# Ou em background (recomendado para desenvolvimento)
-docker-compose up -d --build
+cp .env.example .env
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
 ```
 
-### 3. Verificando se Está Funcionando
+3. No arquivo `.env` da **raiz**, substitua `POSTGRES_PASSWORD` por uma senha própria.
+   Em `backend/.env`, configure um `JWT_SECRET` aleatório e forte. É possível
+   gerar valores aleatórios com:
 
 ```bash
-# Verificar status dos containers
-docker-compose ps
-
-# Ver logs dos serviços
-docker-compose logs backend
-docker-compose logs frontend
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
-### 4. Acessando a Aplicação
+   Não copie a saída desse comando para o GitHub. No Docker, a senha do banco
+   informada na raiz também é passada ao backend, substituindo `DB_PASSWORD` do arquivo
+   `backend/.env`. Para rodar o backend sem Docker, ajuste esse `DB_PASSWORD` manualmente.
 
-- **Frontend (React)**: http://localhost:3001
-- **Backend API**: http://localhost:8002/api/health
-- **Banco PostgreSQL**: localhost:5433
-
-## 🔐 Credenciais de Acesso
-
-### Usuários de Teste
-
-| Usuário | Senha | Permissões |
-|---------|-------|------------|
-| `admin` | `admin123` | Administrador completo |
-| `operator1` | `op123` | Operador básico |
-
-### Acesso ao Banco de Dados
+4. Suba os serviços:
 
 ```bash
-# Conectar ao PostgreSQL via Docker
-docker-compose exec postgres psql -U aluguel_user -d aluguel_db
-
-# Ou via linha de comando
-psql -h localhost -p 5433 -U aluguel_user -d aluguel_db
-# Senha: aluguel_pass123
+docker compose up -d --build
+docker compose ps
+docker compose logs --tail=60 backend
 ```
 
-## 📁 Estrutura do Projeto
-
-```
-tcc-gabriel/
-├── docker-compose.yml          # Configuração Docker
-├── backend/                    # API Node.js/Express
-│   ├── Dockerfile
-│   ├── package.json
-│   ├── app.js                  # Servidor principal
-│   ├── init.sql                # Script de inicialização DB
-│   ├── routes/                 # Endpoints da API
-│   │   ├── auth.js            # Autenticação
-│   │   ├── veiculos.js        # CRUD veículos
-│   │   ├── clientes.js        # CRUD clientes
-│   │   ├── usuarios.js        # CRUD usuários
-│   │   └── alugueis.js        # CRUD aluguéis
-│   ├── middleware/
-│   │   └── auth.js            # Middleware JWT
-│   ├── validation/
-│   │   └── schemas.js         # Validações Joi
-│   └── utils/
-│       └── pagination.js      # Utilitários
-└── frontend/                   # Aplicação React
-    ├── Dockerfile
-    ├── package.json
-    ├── public/
-    │   └── index.html
-    ├── src/
-    │   ├── App.js             # Roteamento principal
-    │   ├── index.js           # Ponto de entrada
-    │   ├── components/
-    │   │   ├── Layout.jsx     # Layout com sidebar
-    │   │   └── ui/            # Componentes reutilizáveis
-    │   ├── pages/             # Páginas da aplicação
-    │   │   ├── Dashboard.jsx  # Dashboard principal
-    │   │   ├── Login.jsx      # Página de login
-    │   │   ├── Veiculos.jsx   # Gestão de veículos
-    │   │   ├── Clientes.jsx   # Gestão de clientes
-    │   │   ├── Usuarios.jsx   # Gestão de usuários
-    │   │   └── Alugueis.jsx   # Gestão de aluguéis
-    │   └── services/
-    │       └── api.js         # Cliente HTTP
-    └── tailwind.config.js     # Configuração Tailwind
-```
-
-## 📚 API Documentation
-
-### Base URL
-```
-http://localhost:8002/api
-```
-
-### Autenticação
-Todas as rotas (exceto login) requerem header `Authorization: Bearer <token>`
-
-### Endpoints Principais
-
-#### 🔐 Autenticação
-```http
-POST /auth/login
-Content-Type: application/json
-
-{
-  "username": "admin",
-  "password": "admin123"
-}
-```
-
-#### 🚗 Veículos
-```http
-GET    /veiculos       # Listar veículos
-POST   /veiculos       # Criar veículo
-GET    /veiculos/:id   # Buscar veículo
-PUT    /veiculos/:id   # Atualizar veículo
-DELETE /veiculos/:id   # Excluir veículo
-```
-
-#### 👥 Clientes
-```http
-GET    /clientes       # Listar clientes
-POST   /clientes       # Criar cliente
-PUT    /clientes/:id   # Atualizar cliente
-DELETE /clientes/:id   # Excluir cliente
-```
-
-#### 👤 Usuários
-```http
-GET    /usuarios       # Listar usuários
-POST   /usuarios       # Criar usuário
-```
-
-#### 📋 Aluguéis
-```http
-GET    /alugueis              # Listar aluguéis
-POST   /alugueis              # Criar aluguel
-PUT    /alugueis/:id          # Atualizar aluguel
-PUT    /alugueis/:id/status   # Alterar status
-PUT    /alugueis/:id/finalizar # Finalizar aluguel
-DELETE /alugueis/:id          # Excluir aluguel
-```
-
-### Códigos de Status
-
-- `200` - Sucesso
-- `201` - Criado
-- `400` - Dados inválidos
-- `401` - Não autorizado
-- `404` - Não encontrado
-- `500` - Erro interno
-
-## 🗄️ Banco de Dados
-
-### Esquemas
-
-- **`iam`** - Identity and Access Management (usuários)
-- **`aluguel`** - Dados de negócio (veículos, clientes, aluguéis)
-
-### Tabelas Principais
-
-```sql
--- iam.usuarios
-CREATE TABLE iam.usuarios (
-    id SERIAL PRIMARY KEY,
-    username VARCHAR(50) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- aluguel.veiculos
-CREATE TABLE aluguel.veiculos (
-    id SERIAL PRIMARY KEY,
-    marca VARCHAR(255) NOT NULL,
-    modelo VARCHAR(255) NOT NULL,
-    categoria VARCHAR(255),
-    ano_fabricacao INTEGER,
-    placa VARCHAR(20) UNIQUE NOT NULL,
-    valor_diaria DECIMAL(10, 2) NOT NULL,
-    disponivel BOOLEAN DEFAULT true
-);
-
--- aluguel.clientes
-CREATE TABLE aluguel.clientes (
-    id SERIAL PRIMARY KEY,
-    cod VARCHAR(50) UNIQUE NOT NULL,
-    nome VARCHAR(255) NOT NULL,
-    endereco VARCHAR(255),
-    telefone VARCHAR(20),
-    data_nascimento DATE
-);
-
--- aluguel.alugueis
-CREATE TABLE aluguel.alugueis (
-    id SERIAL PRIMARY KEY,
-    veiculo_id INTEGER REFERENCES aluguel.veiculos(id),
-    cliente_id INTEGER REFERENCES aluguel.clientes(id),
-    usuario_id INTEGER REFERENCES iam.usuarios(id),
-    data_saida TIMESTAMP NOT NULL,
-    dias_previsto INTEGER,
-    valor_previsto DECIMAL(10, 2),
-    valor_realizado DECIMAL(10, 2),
-    forma_pagamento VARCHAR(50),
-    status VARCHAR(20) DEFAULT 'reservado'
-);
-```
-
-## 🔧 Desenvolvimento
-
-### Comandos Úteis
+5. Como não há mais senhas públicas de demonstração, crie o administrador inicial:
 
 ```bash
-# Parar todos os serviços
-docker-compose down
-
-# Reconstruir apenas o backend
-docker-compose build backend
-
-# Ver logs em tempo real
-docker-compose logs -f
-
-# Acessar container do backend
-docker-compose exec backend sh
-
-# Resetar banco de dados
-docker-compose down -v
-docker-compose up -d
+docker compose exec -e ADMIN_USERNAME=admin -e ADMIN_PASSWORD="escolha-sua-senha-forte" backend npm run create-admin
 ```
 
-### Ambiente de Desenvolvimento
+   Troque `escolha-sua-senha-forte` por sua senha. O script cria o usuário somente
+   se ele ainda não existir. Não guarde senhas reais no README ou nos commits.
+
+6. Abra http://localhost:3001 para a interface ou
+   http://localhost:8002/api/health para conferir o backend.
+
+## Banco já existente: migração obrigatória
+
+**Antes de atualizar o ambiente existente, faça backup do PostgreSQL.** Nunca execute
+`docker compose down -v` em um banco que precisa preservar.
+
+Verifique se a senha do novo `.env` corresponde à senha do PostgreSQL **já inicializado**.
+Alterar `POSTGRES_PASSWORD` no Compose não modifica a senha dentro de um volume existente;
+se for necessário trocar a senha do usuário PostgreSQL, faça essa operação diretamente no
+banco e só depois atualize o arquivo de ambiente.
+
+Aplique a migração uma vez:
 
 ```bash
-# Instalar dependências (se executar localmente)
-cd backend && npm install
-cd ../frontend && npm install
-
-# Executar backend localmente
-cd backend && npm start
-
-# Executar frontend localmente
-cd frontend && npm start
+docker compose exec -T postgres psql -v ON_ERROR_STOP=1 -U aluguel_user -d aluguel_db < backend/migrations/001_locacoes.sql
 ```
 
-### Variáveis de Ambiente
+No Windows PowerShell, o redirecionamento `<` pode ser incompatível. Use:
 
-#### Backend (.env)
-```env
-DB_HOST=postgres
-DB_PORT=5432
-DB_USER=aluguel_user
-DB_PASSWORD=aluguel_pass123
-DB_NAME=aluguel_db
-NODE_PORT=8002
-JWT_SECRET=your-super-secret-jwt-key-change-in-production-please
-API_KEYS=dev-api-key-change-in-production,test-api-key-123
-CORS_ORIGINS=http://localhost:3001
+```powershell
+Get-Content -Raw backend/migrations/001_locacoes.sql | docker compose exec -T postgres psql -v ON_ERROR_STOP=1 -U aluguel_user -d aluguel_db
 ```
 
-#### Frontend (.env)
-```env
-REACT_APP_BACKEND_URL=http://localhost:8002
-```
+A migração:
+- renomeia `end_date` para `data_entrega`, quando aplicável;
+- impede mais de uma reserva/locação aberta para cada veículo;
+- adiciona perfis `admin` e `operador`;
+- adiciona a tabela de tokens JWT revogados;
+- cria a fila de solicitações de autoatendimento e a trilha de auditoria.
 
-## 🧪 Testes
+**Atenção:** se existirem reservas abertas duplicadas, a criação do índice único falhará.
+Resolva as duplicidades após verificar os dados reais antes de prosseguir.
+Usuários antigos chamados `admin` recebem perfil de administrador na migração.
+Senhas antigas de demonstração precisam ser substituídas.
 
-### Testes de Integração
+## Testes de integração
+
+O arquivo `backend/tests/integration.test.js` contém testes HTTP usando PostgreSQL:
+autenticação, papéis, CRUD de usuários, concorrência de reservas, finalização de locação,
+dashboard, RF12/autoatendimento, privacidade, auditoria, integração simulada com IBGE e revogação de tokens. Os testes **apagam e recriam os schemas** no banco
+`aluguel_test`, nunca devem ser executados no banco real.
 
 ```bash
-# Testar API endpoints
-curl http://localhost:8002/api/health
-curl -H "Authorization: Bearer <token>" http://localhost:8002/api/veiculos
+docker compose exec postgres psql -U aluguel_user -d postgres -c "CREATE DATABASE aluguel_test;"
+docker compose exec -e DB_NAME=aluguel_test backend npm test
 ```
 
-### Testes de Interface
+Se `aluguel_test` já existir, pule a criação. Os testes também estão configurados
+em `.github/workflows/ci.yml` para o GitHub Actions, junto da compilação do React.
+A existência dos testes no repositório **não equivale a resultados de execução**;
+guarde a saída e o status dos jobs como evidências para o TCC.
 
-1. **Login/Logout**: Verificar autenticação JWT
-2. **CRUD Operations**: Criar, ler, atualizar, excluir registros
-3. **Navegação**: Testar roteamento entre páginas
-4. **Responsividade**: Verificar layout em diferentes telas
+## Funcionalidades e permissões
 
-## 🤝 Como Contribuir
+| Funcionalidade | Administrador | Operador |
+| --- | --- | --- |
+| Consultar veículos, clientes, locações e dashboard | Sim | Sim |
+| Registrar veículos, clientes e locações | Sim | Sim |
+| Consultar usuários | Sim | Sim, para selecionar responsável |
+| Criar, alterar e excluir usuários | Sim | Não |
+| Consultar solicitações públicas, aprovar e recusar | Sim | Sim |
+| Autoatendimento público: catálogo e envio de solicitação | Público, sem login | Público, sem login |
 
-1. Fork o projeto
-2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
-3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
-4. Push para a branch (`git push origin feature/AmazingFeature`)
-5. Abra um Pull Request
+O JWT expira em 8 horas. O logout revoga o token no banco. As rotas administrativas
+não aceitam API Keys genéricas. Os usuários são autenticados no banco em cada requisição.
 
-### Padrões de Código
+## Estrutura principal
 
-- **ESLint** configurado para qualidade
-- **Prettier** para formatação consistente
-- **Conventional Commits** para mensagens
+```text
+backend/
+  app.js
+  config.js
+  init.sql
+  migrations/001_locacoes.sql
+  middleware/auth.js
+  middleware/roles.js
+  routes/
+  scripts/create-admin.js
+  tests/integration.test.js
+frontend/
+  src/pages/
+  src/services/api.js
+.github/workflows/ci.yml
+```
 
-## 📄 Licença
+## Endpoints da API (rotas administrativas exigem JWT)
 
-Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+- `POST /api/auth/login` — login público
+- `POST /api/auth/logout` — revoga o JWT
+- `GET, POST, PUT, DELETE /api/veiculos` — cadastro e manutenção
+- `GET, POST, PUT, DELETE /api/clientes` — cadastro e manutenção
+- `GET, POST /api/usuarios` e `PUT, DELETE /api/usuarios/:id` — operações de gestão
+- `GET, POST, PUT, DELETE /api/alugueis` — ciclo de locação
+- `PUT /api/alugueis/:id/status` — ativar ou cancelar
+- `PUT /api/alugueis/:id/finalizar` — finalizar e devolver o veículo
+- `GET /api/dashboard` — indicadores agregados reais do PostgreSQL
+- `GET /api/auditoria` — histórico de operações, somente administrador
+- `GET /api/solicitacoes`, `PUT /api/solicitacoes/:id/aprovar` e `PUT /api/solicitacoes/:id/recusar` — gestão de pedidos públicos
+- `DELETE /api/solicitacoes/:id/dados` — eliminação de pedido recusado por funcionário autenticado
+- `GET /api/integracoes/ufs` — localidades do IBGE, somente dados públicos
+- **Público, sem JWT:** `GET /api/publico/veiculos`, `POST /api/publico/solicitacoes`, `GET /api/publico/termos-uso`, `GET /api/publico/politica-privacidade`
 
-## 👨‍💻 Autor
+Páginas públicas no React: `/autoatendimento`, `/termos-uso` e `/politica-privacidade`.
+A área administrativa inclui as telas de Solicitações e Auditoria.
 
-**Gabriel** - *Trabalho de Conclusão de Curso*
+As rotas protegidas exigem `Authorization: Bearer <token>`.
+Ao finalizar ou cancelar uma locação, a disponibilidade do veículo é restaurada.
 
-- **GitHub**: [@gabriel-tcc](https://github.com/gabriel-tcc)
-- **LinkedIn**: [Gabriel TCC](https://linkedin.com/in/gabriel-tcc)
+## Escopo acadêmico e evidências
 
-## 🙏 Agradecimentos
+A Entrega 4 está preservada em `entrega0911` e seu checklist está em
+`docs/validacao-entrega4.md`. A versão de desenvolvimento está em `main`.
+Para a Entrega 5, consulte `docs/entrega5.md` e `docs/lgpd.md`.
+Os fluxos críticos têm testes de integração no CI, mas a avaliação acadêmica
+também exige a monografia final, os diagramas e o resumo expandido, que devem
+ser enviados nos locais orientados pelo professor. **Não invente evidências de
+operação real ou diga que existe certificação formal de conformidade LGPD.**
 
-- Orientador acadêmico
-- Professores do curso
-- Comunidade open source
-
----
-
-<div align="center">
-
-**TCC-GABRIEL** 🚗✨
-
-*Sistema de Gestão de Aluguéis de Carros*
-
-Desenvolvido com ❤️ usando tecnologias modernas
-
-</div>
+**Não publique arquivos .env, senhas, tokens ou dados de clientes reais.**

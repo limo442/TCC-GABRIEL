@@ -32,8 +32,15 @@ CREATE TABLE iam.usuarios (
     id SERIAL PRIMARY KEY,
     username VARCHAR(50) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
+    role VARCHAR(20) NOT NULL DEFAULT 'operador' CHECK (role IN ('admin', 'operador')),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tokens revogados permanecem bloqueados até a expiração.
+CREATE TABLE iam.tokens_revogados (
+    jti UUID PRIMARY KEY,
+    expires_at TIMESTAMPTZ NOT NULL
 );
 
 -- Create rentals table
@@ -43,7 +50,7 @@ CREATE TABLE aluguel.alugueis (
     cliente_id INTEGER REFERENCES aluguel.clientes(id),
     usuario_id INTEGER REFERENCES iam.usuarios(id),
     data_saida TIMESTAMP NOT NULL,
-    end_date TIMESTAMP,
+    data_entrega TIMESTAMP,
     dias_previsto INTEGER,
     valor_previsto DECIMAL(10, 2),
     valor_realizado DECIMAL(10, 2),
@@ -52,6 +59,42 @@ CREATE TABLE aluguel.alugueis (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Impede duas reservas ou locações abertas para o mesmo veículo.
+CREATE UNIQUE INDEX uq_veiculo_locacao_aberta
+ON aluguel.alugueis (veiculo_id)
+WHERE status IN ('reservado', 'ativo');
+
+
+-- Pedidos públicos não bloqueiam veículos; aprovação transforma o pedido em reserva.
+CREATE TABLE aluguel.solicitacoes (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    veiculo_id INTEGER NOT NULL REFERENCES aluguel.veiculos(id),
+    nome VARCHAR(120) NOT NULL,
+    email VARCHAR(180) NOT NULL,
+    telefone VARCHAR(20),
+    data_saida DATE NOT NULL,
+    dias_previsto INTEGER NOT NULL CHECK (dias_previsto BETWEEN 1 AND 90),
+    status VARCHAR(20) NOT NULL DEFAULT 'pendente'
+      CHECK (status IN ('pendente','aprovada','recusada')),
+    aceite_politica_em TIMESTAMPTZ NOT NULL,
+    atendida_por INTEGER REFERENCES iam.usuarios(id) ON DELETE SET NULL,
+    aluguel_id INTEGER REFERENCES aluguel.alugueis(id) ON DELETE SET NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_solicitacoes_status_criacao ON aluguel.solicitacoes(status, created_at DESC);
+
+-- Registro de operações sem payload, senhas, email, tokens ou endereço IP.
+CREATE TABLE iam.auditoria (
+    id BIGSERIAL PRIMARY KEY,
+    usuario_id INTEGER REFERENCES iam.usuarios(id) ON DELETE SET NULL,
+    evento VARCHAR(80) NOT NULL,
+    recurso VARCHAR(90) NOT NULL,
+    codigo_http INTEGER NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_auditoria_criacao ON iam.auditoria(created_at DESC);
 
 -- Insert sample data
 INSERT INTO aluguel.veiculos (marca, modelo, categoria, ano_fabricacao, placa, valor_diaria, disponivel) VALUES
@@ -66,8 +109,4 @@ INSERT INTO aluguel.clientes (cod, nome, endereco, telefone, data_nascimento) VA
 ('C002', 'Maria Oliveira', 'Rua B, 456', '(11) 98765-4321', '1985-05-15'),
 ('C003', 'Carlos Souza', 'Rua C, 789', '(11) 99999-9999', '1992-10-20');
 
-INSERT INTO iam.usuarios (username, password, created_at) VALUES
-('admin', '$2a$10$mHaax3.qdukxe07mXNpwO.qZcaQy7QDgFSgFPVmi2uGg03y0p3p2.', NOW()),
-('operator1', '$2a$10$mHaax3.qdukxe07mXNpwO.qZcaQy7QDgFSgFPVmi2uGg03y0p3p2.', NOW());
-
--- Note: Passwords are bcrypt hashed. Plaintext: 'admin123' for admin, 'op123' for operator1.
+-- Sem senhas padrão públicas: crie o primeiro admin via npm run create-admin.

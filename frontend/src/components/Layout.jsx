@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { NavLink, useLocation, useNavigate, Outlet } from 'react-router-dom';
-import { LayoutDashboard, Car, Users, UserCheck, FileText, Menu, X, ChevronRight, LogOut } from 'lucide-react';
+import { LayoutDashboard, Car, Users, UserCheck, FileText, FileClock, ClipboardList, Menu, X, ChevronRight, LogOut } from 'lucide-react';
 import { toast } from 'sonner';
+import { api } from '../services/api';
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -9,6 +10,8 @@ const navItems = [
   { to: '/clientes', icon: Users, label: 'Clientes' },
   { to: '/usuarios', icon: UserCheck, label: 'Usuários' },
   { to: '/alugueis', icon: FileText, label: 'Aluguéis' },
+  { to: '/solicitacoes', icon: ClipboardList, label: 'Solicitações' },
+  { to: '/auditoria', icon: FileClock, label: 'Auditoria' },
 ];
 
 export default function Layout({ onLogout }) {
@@ -18,18 +21,23 @@ export default function Layout({ onLogout }) {
 
   const pageTitle = navItems.find(n => n.to === location.pathname)?.label || 'Aluguel de Carros';
 
-  const handleLogout = () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('user');
-    window.dispatchEvent(new Event('authChange'));
-    if (onLogout) {
-      onLogout();
+  const handleLogout = async () => {
+    try {
+      await api.post('/auth/logout');
+    } catch (_) {
+      // Mesmo sem conexão, encerra a sessão local.
+    } finally {
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('user');
+      window.dispatchEvent(new Event('authChange'));
+      if (onLogout) onLogout();
+      toast.success('Sessão local encerrada');
+      navigate('/login', { replace: true });
     }
-    toast.success('Logout realizado com sucesso!');
-    navigate('/login', { replace: true });
   };
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const availableNav = navItems.filter(n => !['/usuarios','/auditoria'].includes(n.to) || user.role === 'admin');
 
   return (
     <div className="flex h-screen bg-[#F8F9FA] overflow-hidden">
@@ -60,7 +68,7 @@ export default function Layout({ onLogout }) {
 
         {/* Nav */}
         <nav className="flex-1 px-3 py-4 space-y-1" data-testid="sidebar-nav">
-          {navItems.map(({ to, icon: Icon, label }) => (
+          {availableNav.map(({ to, icon: Icon, label }) => (
             <NavLink
               key={to}
               to={to}

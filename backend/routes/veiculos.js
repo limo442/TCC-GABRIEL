@@ -86,54 +86,62 @@ router.post('/', async (req, res) => {
 
 // PUT /api/veiculos/:id
 router.put('/:id', async (req, res) => {
+  const { error, value } = veiculoInputSchema.validate(req.body);
+  const { error: idError } = veiculoIdSchema.validate(req.params);
+  if (error || idError) return res.status(400).json({
+    code: 'VALIDATION_ERROR',
+    message: (error || idError).details[0].message
+  });
+
+  const client = await db.connect();
   try {
-    // Validate input using Joi
-    const { error, value } = veiculoInputSchema.validate(req.body);
-    if (error) {
-      return res.status(400).json({ 
-        code: 'VALIDATION_ERROR', 
-        type: 'BAD_REQUEST', 
-        message: 'Dados inválidos', 
-        detailedMessage: error.details[0].message 
-      });
+    await client.query('BEGIN');
+    const existing = await client.query(
+      'SELECT * FROM aluguel.veiculos WHERE id = $1 FOR UPDATE', [req.params.id]
+    );
+    if (!existing.rows.length) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ code: 'VEHICLE_NOT_FOUND', message: 'Veículo não encontrado' });
     }
 
-    const { id } = req.params;
-    
-    // Validate ID
-    const { error: idError } = veiculoIdSchema.validate({ id });
-    if (idError) {
-      return res.status(400).json({ 
-        code: 'VALIDATION_ERROR', 
-        type: 'BAD_REQUEST', 
-        message: 'ID inválido', 
-        detailedMessage: idError.details[0].message 
-      });
+    // Um veículo com reserva ou aluguel em aberto não pode ser disponibilizado à força.
+    if (value.disponivel === true) {
+      const openRentals = await client.query(
+        "SELECT id FROM aluguel.alugueis WHERE veiculo_id = $1 AND status IN ('reservado', 'ativo') LIMIT 1",
+        [req.params.id]
+      );
+      if (openRentals.rows.length) {
+        await client.query('ROLLBACK');
+        return res.status(409).json({
+          code: 'VEHICLE_IN_USE',
+          message: 'Não é possível disponibilizar um veículo com aluguel em aberto'
+        });
+      }
     }
 
-    const { marca, modelo, categoria, ano_fabricacao, placa, valor_diaria, disponivel } = value;
-    const existing = await db.query('SELECT * FROM aluguel.veiculos WHERE id = $1', [id]);
-    if (existing.rows.length === 0) return res.status(404).json({ code: 'VEHICLE_NOT_FOUND', type: 'NOT_FOUND', message: 'Veículo não encontrado', detailedMessage: `Veículo com id ${id} não existe` });
-
-    const v = existing.rows[0];
-    const result = await db.query(
-      `UPDATE aluguel.veiculos SET marca=$1, modelo=$2, categoria=$3, ano_fabricacao=$4, placa=$5, valor_diaria=$6, disponivel=$7, updated_at=NOW()
+    const old = existing.rows[0];
+    const result = await client.query(
+      `UPDATE aluguel.veiculos
+       SET marca=$1, modelo=$2, categoria=$3, ano_fabricacao=$4,
+           placa=$5, valor_diaria=$6, disponivel=$7, updated_at=NOW()
        WHERE id=$8 RETURNING *`,
       [
-        marca ?? v.marca,
-        modelo ?? v.modelo,
-        categoria ?? v.categoria,
-        ano_fabricacao ?? v.ano_fabricacao,
-        placa ?? v.placa,
-        valor_diaria ?? v.valor_diaria,
-        disponivel !== undefined ? disponivel : v.disponivel,
-        id,
+        value.marca, value.modelo, value.categoria, value.ano_fabricacao,
+        value.placa, value.valor_diaria,
+        value.disponivel !== undefined ? value.disponivel : old.disponivel,
+        req.params.id
       ]
     );
+    await client.query('COMMIT');
     res.json(result.rows[0]);
   } catch (err) {
-    if (err.code === '23505') return res.status(400).json({ code: 'DUPLICATE_PLATE', type: 'BAD_REQUEST', message: 'Placa já cadastrada', detailedMessage: `A placa informada já existe` });
-    res.status(500).json({ code: 'DB_ERROR', type: 'INTERNAL_SERVER_ERROR', message: 'Erro ao atualizar veículo', detailedMessage: err.message });
+    await client.query('ROLLBACK');
+    if (err.code === '23505') return res.status(409).json({
+      code: 'DUPLICATE_PLATE', message: 'Placa já cadastrada'
+    });
+    res.status(500).json({ code: 'DB_ERROR', message: 'Erro ao atualizar veículo' });
+  } finally {
+    client.release();
   }
 });
 

@@ -10,9 +10,6 @@ const {
   aluguelFinalizarSchema
 } = require('../validation/schemas');
 
-const VALID_STATUS = ['reservado', 'ativo', 'cancelado', 'concluido'];
-const VALID_PAGAMENTO = ['dinheiro', 'pix', 'cartao'];
-
 // Allowed status transitions
 const STATUS_TRANSITIONS = {
   reservado: ['ativo', 'cancelado'],
@@ -95,7 +92,6 @@ router.post('/', async (req, res) => {
     // Validate input using Joi
     const { error, value } = aluguelInputSchema.validate(req.body);
     if (error) {
-      await client.release();
       return res.status(400).json({ 
         code: 'VALIDATION_ERROR', 
         type: 'BAD_REQUEST', 
@@ -109,7 +105,7 @@ router.post('/', async (req, res) => {
     await client.query('BEGIN');
 
     // Check vehicle availability
-    const veiculo = await client.query('SELECT * FROM aluguel.veiculos WHERE id = $1', [veiculo_id]);
+    const veiculo = await client.query('SELECT * FROM aluguel.veiculos WHERE id = $1 FOR UPDATE', [veiculo_id]);
     if (veiculo.rows.length === 0) {
       await client.query('ROLLBACK');
       return res.status(404).json({ code: 'VEHICLE_NOT_FOUND', type: 'NOT_FOUND', message: 'Veículo não encontrado', detailedMessage: '' });
@@ -132,66 +128,71 @@ router.post('/', async (req, res) => {
     res.status(201).json(result.rows[0]);
   } catch (err) {
     await client.query('ROLLBACK');
-    res.status(500).json({ code: 'DB_ERROR', type: 'INTERNAL_SERVER_ERROR', message: 'Erro ao criar aluguel', detailedMessage: err.message });
+    if (err.code === '23505') return res.status(409).json({ code: 'VEHICLE_UNAVAILABLE', message: 'Veículo já reservado' });
+    if (err.code === '23503') return res.status(400).json({ code: 'INVALID_REFERENCE', message: 'Cliente ou usuário inválido' });
+    res.status(500).json({ code: 'DB_ERROR', type: 'INTERNAL_SERVER_ERROR', message: 'Erro ao criar aluguel' });
   } finally {
     client.release();
   }
 });
 
 // PUT /api/alugueis/:id
+// Somente campos administrativos: veículo e status exigem regras transacionais próprias.
 router.put('/:id', async (req, res) => {
+  const { error: idError } = aluguelIdSchema.validate(req.params);
+  const { error, value } = aluguelUpdateSchema.validate(req.body);
+  if (idError || error) {
+    return res.status(400).json({
+      code: 'VALIDATION_ERROR', message: (idError || error).details[0].message
+    });
+  }
+
+  const blocked = ['veiculo_id', 'status', 'data_entrega', 'valor_realizado'];
+  if (blocked.some(key => Object.prototype.hasOwnProperty.call(value, key))) {
+    return res.status(400).json({
+      code: 'OPERACAO_NAO_PERMITIDA',
+      message: 'Veículo, status e finalização devem ser alterados nas operações específicas'
+    });
+  }
+
+  const editable = ['cliente_id', 'usuario_id', 'data_saida', 'dias_previsto', 'valor_previsto', 'forma_pagamento'];
+  const fields = editable.filter(key => Object.prototype.hasOwnProperty.call(value, key));
+  if (fields.length === 0) {
+    return res.status(400).json({ code: 'VALIDATION_ERROR', message: 'Informe ao menos um campo editável' });
+  }
+
+  const client = await db.connect();
   try {
-    // Validate input using Joi (partial validation for updates)
-    const { error, value } = aluguelUpdateSchema.validate(req.body);
-    if (error) {
-      return res.status(400).json({ 
-        code: 'VALIDATION_ERROR', 
-        type: 'BAD_REQUEST', 
-        message: 'Dados inválidos', 
-        detailedMessage: error.details[0].message 
-      });
-    }
-
-    const { id } = req.params;
-    
-    // Validate ID
-    const { error: idError } = aluguelIdSchema.validate({ id });
-    if (idError) {
-      return res.status(400).json({ 
-        code: 'VALIDATION_ERROR', 
-        type: 'BAD_REQUEST', 
-        message: 'ID inválido', 
-        detailedMessage: idError.details[0].message 
-      });
-    }
-
-    const existing = await db.query('SELECT * FROM aluguel.alugueis WHERE id = $1', [id]);
-    if (existing.rows.length === 0) return res.status(404).json({ code: 'RENTAL_NOT_FOUND', type: 'NOT_FOUND', message: 'Aluguel não encontrado', detailedMessage: '' });
-
-    const a = existing.rows[0];
-    const { veiculo_id, cliente_id, usuario_id, data_saida, data_entrega, dias_previsto, valor_previsto, valor_realizado, forma_pagamento, status } = value;
-
-    const result = await db.query(
-      `UPDATE aluguel.alugueis SET veiculo_id=$1, cliente_id=$2, usuario_id=$3, data_saida=$4, data_entrega=$5,
-       dias_previsto=$6, valor_previsto=$7, valor_realizado=$8, forma_pagamento=$9, status=$10, updated_at=NOW()
-       WHERE id=$11 RETURNING *`,
-      [
-        veiculo_id ?? a.veiculo_id,
-        cliente_id ?? a.cliente_id,
-        usuario_id ?? a.usuario_id,
-        data_saida ?? a.data_saida,
-        data_entrega !== undefined ? data_entrega : a.data_entrega,
-        dias_previsto ?? a.dias_previsto,
-        valor_previsto ?? a.valor_previsto,
-        valor_realizado !== undefined ? valor_realizado : a.valor_realizado,
-        forma_pagamento ?? a.forma_pagamento,
-        status ?? a.status,
-        id,
-      ]
+    await client.query('BEGIN');
+    const current = await client.query(
+      'SELECT id, status FROM aluguel.alugueis WHERE id = $1 FOR UPDATE', [req.params.id]
     );
-    res.json(result.rows[0]);
+    if (!current.rows.length) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ code: 'RENTAL_NOT_FOUND', message: 'Aluguel não encontrado' });
+    }
+    if (current.rows[0].status !== 'reservado') {
+      await client.query('ROLLBACK');
+      return res.status(409).json({
+        code: 'RENTAL_LOCKED', message: 'Somente reservas pendentes podem ser editadas'
+      });
+    }
+    const assignments = fields.map((field, i) => `${field} = $${i + 1}`).join(', ');
+    const params = [...fields.map(field => value[field]), req.params.id];
+    const result = await client.query(
+      `UPDATE aluguel.alugueis SET ${assignments}, updated_at = NOW()
+       WHERE id = $${params.length} RETURNING *`, params
+    );
+    await client.query('COMMIT');
+    return res.json(result.rows[0]);
   } catch (err) {
-    res.status(500).json({ code: 'DB_ERROR', type: 'INTERNAL_SERVER_ERROR', message: 'Erro ao atualizar aluguel', detailedMessage: err.message });
+    await client.query('ROLLBACK');
+    if (err.code === '23503') {
+      return res.status(400).json({ code: 'INVALID_REFERENCE', message: 'Cliente ou usuário inválido' });
+    }
+    return res.status(500).json({ code: 'DB_ERROR', message: 'Erro ao atualizar aluguel' });
+  } finally {
+    client.release();
   }
 });
 
@@ -199,10 +200,10 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   const client = await db.connect();
   try {
-    const existing = await client.query('SELECT * FROM aluguel.alugueis WHERE id = $1', [req.params.id]);
-    if (existing.rows.length === 0) return res.status(404).json({ code: 'RENTAL_NOT_FOUND', type: 'NOT_FOUND', message: 'Aluguel não encontrado', detailedMessage: '' });
-
     await client.query('BEGIN');
+    const existing = await client.query('SELECT * FROM aluguel.alugueis WHERE id = $1 FOR UPDATE', [req.params.id]);
+    if (existing.rows.length === 0) { await client.query('ROLLBACK'); return res.status(404).json({ code: 'RENTAL_NOT_FOUND', type: 'NOT_FOUND', message: 'Aluguel não encontrado', detailedMessage: '' }); }
+
     // Restore vehicle availability if rental was active
     const rental = existing.rows[0];
     if (['reservado', 'ativo'].includes(rental.status)) {
@@ -226,7 +227,6 @@ router.put('/:id/status', async (req, res) => {
     // Validate input using Joi
     const { error, value } = aluguelStatusSchema.validate(req.body);
     if (error) {
-      await client.release();
       return res.status(400).json({ 
         code: 'VALIDATION_ERROR', 
         type: 'BAD_REQUEST', 
@@ -241,7 +241,6 @@ router.put('/:id/status', async (req, res) => {
     // Validate ID
     const { error: idError } = aluguelIdSchema.validate({ id });
     if (idError) {
-      await client.release();
       return res.status(400).json({ 
         code: 'VALIDATION_ERROR', 
         type: 'BAD_REQUEST', 
@@ -250,20 +249,19 @@ router.put('/:id/status', async (req, res) => {
       });
     }
 
-    const existing = await client.query('SELECT * FROM aluguel.alugueis WHERE id = $1', [id]);
+    await client.query('BEGIN');
+    const existing = await client.query('SELECT * FROM aluguel.alugueis WHERE id = $1 FOR UPDATE', [id]);
     if (existing.rows.length === 0) {
-      await client.release();
+      await client.query('ROLLBACK');
       return res.status(404).json({ code: 'RENTAL_NOT_FOUND', type: 'NOT_FOUND', message: 'Aluguel não encontrado', detailedMessage: '' });
     }
 
     const rental = existing.rows[0];
     const allowed = STATUS_TRANSITIONS[rental.status] || [];
     if (!allowed.includes(status)) {
-      await client.release();
+      await client.query('ROLLBACK');
       return res.status(400).json({ code: 'INVALID_TRANSITION', type: 'BAD_REQUEST', message: 'Transição de status não permitida', detailedMessage: `Não é possível mudar de \"${rental.status}\" para \"${status}\"` });
     }
-
-    await client.query('BEGIN');
 
     // If canceling, restore vehicle availability
     if (status === 'cancelado') {
@@ -272,7 +270,7 @@ router.put('/:id/status', async (req, res) => {
 
     const result = await client.query(
       'UPDATE aluguel.alugueis SET status=$1, usuario_id=$2, updated_at=NOW() WHERE id=$3 RETURNING *',
-      [status, usuario_id, id]
+      [status, req.user.id, id]
     );
 
     await client.query('COMMIT');
@@ -292,7 +290,6 @@ router.put('/:id/finalizar', async (req, res) => {
     // Validate input using Joi
     const { error, value } = aluguelFinalizarSchema.validate(req.body);
     if (error) {
-      await client.release();
       return res.status(400).json({ 
         code: 'VALIDATION_ERROR', 
         type: 'BAD_REQUEST', 
@@ -307,7 +304,6 @@ router.put('/:id/finalizar', async (req, res) => {
     // Validate ID
     const { error: idError } = aluguelIdSchema.validate({ id });
     if (idError) {
-      await client.release();
       return res.status(400).json({ 
         code: 'VALIDATION_ERROR', 
         type: 'BAD_REQUEST', 
@@ -316,19 +312,18 @@ router.put('/:id/finalizar', async (req, res) => {
       });
     }
 
-    const existing = await client.query('SELECT * FROM aluguel.alugueis WHERE id = $1', [id]);
+    await client.query('BEGIN');
+    const existing = await client.query('SELECT * FROM aluguel.alugueis WHERE id = $1 FOR UPDATE', [id]);
     if (existing.rows.length === 0) {
-      await client.release();
+      await client.query('ROLLBACK');
       return res.status(404).json({ code: 'RENTAL_NOT_FOUND', type: 'NOT_FOUND', message: 'Aluguel não encontrado', detailedMessage: '' });
     }
 
     const rental = existing.rows[0];
     if (rental.status !== 'ativo') {
-      await client.release();
+      await client.query('ROLLBACK');
       return res.status(400).json({ code: 'INVALID_STATUS', type: 'BAD_REQUEST', message: 'Apenas aluguéis ativos podem ser finalizados', detailedMessage: `Status atual: ${rental.status}` });
     }
-
-    await client.query('BEGIN');
 
     // Restore vehicle availability
     await client.query('UPDATE aluguel.veiculos SET disponivel=TRUE, updated_at=NOW() WHERE id=$1', [rental.veiculo_id]);
@@ -336,7 +331,7 @@ router.put('/:id/finalizar', async (req, res) => {
     const result = await client.query(
       `UPDATE aluguel.alugueis SET status='concluido', data_entrega=$1, valor_realizado=$2, forma_pagamento=$3, usuario_id=$4, updated_at=NOW()
        WHERE id=$5 RETURNING *`,
-      [data_entrega, valor_realizado, forma_pagamento, usuario_id, id]
+      [data_entrega, valor_realizado, forma_pagamento, req.user.id, id]
     );
 
     await client.query('COMMIT');
