@@ -7,6 +7,7 @@ const veiculosRouter = require('./routes/veiculos');
 const usuariosRouter = require('./routes/usuarios');
 const clientesRouter = require('./routes/clientes');
 const alugueisRouter = require('./routes/alugueis');
+const dashboardRouter = require('./routes/dashboard');
 
 const app = express();
 const PORT = process.env.NODE_PORT || 8002;
@@ -31,6 +32,7 @@ app.use('/api/veiculos', veiculosRouter);
 app.use('/api/usuarios', usuariosRouter);
 app.use('/api/clientes', clientesRouter);
 app.use('/api/alugueis', alugueisRouter);
+app.use('/api/dashboard', dashboardRouter);
 
 // 404
 app.use((req, res) => {
