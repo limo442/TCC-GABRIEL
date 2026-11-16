@@ -1,6 +1,6 @@
 # Checklist de validação — Entrega 4 (09/11/2026)
 
-Documento de rastreabilidade entre a avaliação técnica e o código da branch `entrega0911`.
+Documento de rastreabilidade do diagnóstico de Entrega 4. A branch `entrega0911` foi atualizada com as correções posteriores para Entrega 5; o histórico de commits permite distinguir as etapas. Não atribuir a implementação à data anterior à sua criação.
 
 > **Situação:** correções implementadas e testes automatizados adicionados. Uma execução
 > bem-sucedida no PostgreSQL real e evidências de interface devem ser anexadas antes
@@ -21,7 +21,7 @@ Documento de rastreabilidade entre a avaliação técnica e o código da branch 
 | RF09 Consulta de aluguéis | `GET /api/alugueis` e `GET /:id` | Conferir histórico |
 | RF10 Ciclo de locação | Rotas de status, finalização, exclusão | Reservar → ativar → concluir/cancelar |
 | RF11 Logout | `POST /api/auth/logout` com token revogado | Token antigo retorna 401 |
-| RF12 Autoatendimento | **Evolução futura** | Não implementado |
+| RF12 Autoatendimento | **Não implementado no diagnóstico original de Entrega 4** | Implementado posteriormente para a Entrega 5; ver `docs/entrega5.md` |
 | RF13 Dashboard | `routes/dashboard.js` com agregação SQL | Conferir números com mais de 10 registros |
 
 A porcentagem de requisitos homologados só pode ser calculada após a execução dos testes
@@ -50,7 +50,7 @@ baseado apenas em inspeção de código.
 - Refinar diagrama de classes UML, distinguindo entidades persistidas e operações.
 - Aprofundar fundamentação sobre gestão de locadoras e reservas digitais, com fontes científicas.
 - Corrigir referências, sumário, paginação, figuras e legendas para o manual ABNT institucional.
-- Tratar explicitamente RF12 como não implementado nesta versão, sem alegar autoatendimento completo.
+- Para a Entrega 4, reconhecer que RF12 não constava na implementação original; para a Entrega 5, consultar o novo fluxo público com aprovação administrativa em `docs/entrega5.md`.
 - Associar resultados e capturas aos testes efetivamente executados.
 
 A monografia original precisa ser fornecida para correção textual e de formatação.
