@@ -19,6 +19,13 @@ export default function Layout({ onLogout }) {
   const pageTitle = navItems.find(n => n.to === location.pathname)?.label || 'Aluguel de Carros';
 
   const handleLogout = () => {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/logout`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      }).catch(() => {});
+    }
     localStorage.removeItem('authToken');
     localStorage.removeItem('user');
     window.dispatchEvent(new Event('authChange'));
@@ -30,6 +37,7 @@ export default function Layout({ onLogout }) {
   };
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const availableNav = navItems.filter(n => n.to !== '/usuarios' || user.role === 'admin');
 
   return (
     <div className="flex h-screen bg-[#F8F9FA] overflow-hidden">
@@ -60,7 +68,7 @@ export default function Layout({ onLogout }) {
 
         {/* Nav */}
         <nav className="flex-1 px-3 py-4 space-y-1" data-testid="sidebar-nav">
-          {navItems.map(({ to, icon: Icon, label }) => (
+          {availableNav.map(({ to, icon: Icon, label }) => (
             <NavLink
               key={to}
               to={to}
