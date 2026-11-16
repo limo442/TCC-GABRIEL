@@ -129,7 +129,7 @@ export default function AluguelDetail({ id, onBack }) {
             <Calendar size={18} className="text-[#0047FF]" />
             <h3 className="font-heading text-base font-semibold text-slate-900">Datas</h3>
           </div>
-          <InfoRow label="Data da Reserva" value={fmtDate(rental.data_reserva)} />
+          <InfoRow label="Data da Reserva" value={fmtDate(rental.created_at)} />
           <InfoRow label="Data de Saída" value={fmtDate(rental.data_saida)} />
           <InfoRow label="Dias Previstos" value={`${rental.dias_previsto} dia(s)`} />
           <InfoRow label="Data de Entrega" value={fmtDate(rental.data_entrega)} />
