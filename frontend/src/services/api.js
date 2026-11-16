@@ -24,6 +24,13 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
+    // Um token inválido não pode deixar a interface em estado de login aparente.
+    if (error.response?.status === 401 && localStorage.getItem('authToken') &&
+        !error.config?.url?.includes('/auth/login')) {
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('user');
+      window.dispatchEvent(new Event('authChange'));
+    }
     return Promise.reject(error);
   }
 );
