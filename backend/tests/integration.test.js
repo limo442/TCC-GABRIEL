@@ -203,7 +203,7 @@ test('portal público expõe catálogo mínimo, termos e política de privacidad
 
 test('RF12: solicitação pública, aprovação administrativa e conversão em reserva', async () => {
   const body = {
-    veiculo_id: 2, nome: 'Pessoa de Teste', email: 'exemplo@invalid.test',
+    veiculo_id: 2, nome: 'Pessoa de Teste', email: 'exemplo@example.com',
     telefone: '', data_saida: '2026-12-03', dias_previsto: 3,
     aceite_politica: true
   };
@@ -237,7 +237,7 @@ test('RF12: solicitação pública, aprovação administrativa e conversão em r
 test('solicitação recusada pode ter dados eliminados por usuário autenticado', async () => {
   const requested = await api('/publico/solicitacoes', {
     method: 'POST',
-    body: { veiculo_id: 3, nome: 'Outra Pessoa de Teste', email: 'teste@invalid.test',
+    body: { veiculo_id: 3, nome: 'Outra Pessoa de Teste', email: 'teste@example.com',
       data_saida: '2026-12-04', dias_previsto: 1, aceite_politica: true }
   });
   assert.equal(requested.status, 201);
