@@ -22,7 +22,7 @@ function paginate(results, page, pageSize) {
 function parsePagination(query) {
   const rawPage = query.page === undefined ? '0' : String(query.page);
   const rawSize = query.pageSize === undefined ? '10' : String(query.pageSize);
-  if (!/^(0|[1-9]\\d*)$/.test(rawPage) || !/^[1-9]\\d*$/.test(rawSize)) {
+  if (!/^(0|[1-9][0-9]*)$/.test(rawPage) || !/^[1-9][0-9]*$/.test(rawSize)) {
     return null;
   }
   const pageNum = Number(rawPage);
