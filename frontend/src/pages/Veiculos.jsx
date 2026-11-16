@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Plus, Pencil, Trash2, Search, CheckCircle, XCircle, Filter } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, CheckCircle, XCircle } from 'lucide-react';
 import { veiculosAPI } from '../services/api';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
