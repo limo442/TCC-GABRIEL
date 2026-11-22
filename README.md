@@ -1,5 +1,14 @@
 # TCC — Sistema de Gerenciamento de Aluguel de Veículos
 
+## Entrega final — 22/11/2026
+
+A versão final para avaliação está na branch [`entregafinal`](https://github.com/limo442/TCC-GABRIEL/tree/entregafinal). Consulte o [checklist da publicação final](docs/entregafinal.md) e o [manual do usuário](docs/manual-do-usuario.md).
+
+**Evidência verificada da entrega final:** [GitHub Actions nº 45055353103](https://github.com/limo442/TCC-GABRIEL/actions/runs/45055353103) — 34 testes aprovados (17 unitários e 17 de integração), 57,14% de cobertura de linhas do backend e build React aprovado. A meta de 50% refere-se à **cobertura de linhas**, não à cobertura de funções (39,35%). Execute os scripts a partir de `backend/`: `npm run test:unit` ou `npm run test:coverage` (este último requer PostgreSQL de teste `aluguel_test`).
+
+Os arquivos de apresentação e a monografia atualizada com Apêndice B devem ser enviados no **chat do projeto**, seguindo a orientação do professor. O repositório não substitui essa publicação documental.
+
+
 Aplicação acadêmica com React, Node.js/Express, PostgreSQL, JWT e Docker Compose.
 
 **Versão acadêmica — Entrega 5 (16/11/2026):** requisitos funcionais RF01–RF13 implementados no código, incluindo RF12 (consulta pública de veículos, solicitação de reserva e análise da equipe).
