@@ -2,9 +2,9 @@ name: Testes do TCC
 
 on:
   push:
-    branches: [main, entrega0911]
+    branches: [main, entrega0911, entregafinal]
   pull_request:
-    branches: [main]
+    branches: [main, entregafinal]
 
 jobs:
   backend:
@@ -40,9 +40,9 @@ jobs:
       - name: Instalar dependências da API
         working-directory: backend
         run: npm install --no-audit --no-fund
-      - name: Executar testes de integração
+      - name: Executar testes unitários e de integração com cobertura mínima de 50%
         working-directory: backend
-        run: npm test
+        run: npm run test:coverage
 
   frontend:
     runs-on: ubuntu-latest
